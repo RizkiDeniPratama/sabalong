@@ -1,0 +1,106 @@
+@startuml
+
+!theme plain
+
+title Sistem Helpdesk & Katalog Layanan Digital - Use Case Diagram
+
+
+left to right direction
+
+
+actor "User/Pemohon" as User
+
+actor "Petugas Layanan" as Officer
+
+actor "Admin Sistem" as Admin
+
+actor "Pimpinan" as Leader
+
+
+rectangle "Sistem Helpdesk Ticketing" {
+
+  (Login) as UC1
+
+  (Lihat Katalog Layanan) as UC2
+
+  (Ajukan Permohonan Layanan) as UC3
+
+  (Tracking Status Tiket) as UC4
+
+  (Berikan Feedback) as UC5
+
+  (Terima Notifikasi Tiket) as UC6
+
+  (Update Status Tiket) as UC7
+
+  (Eskalasi Tiket) as UC9
+
+  (Kelola Katalog Layanan) as UC10
+
+  (Atur SLA & Assignment) as UC11
+
+  (Kelola User & Petugas) as UC12
+
+'   (Monitoring System) as UC13
+
+  (Lihat Dashboard Analytics) as UC14
+
+  (Cetak Laporan) as UC15
+
+  (Monitor Kinerja Petugas) as UC16
+
+}
+
+
+' --- Hubungan Aktor dengan Use Case ---
+
+
+User --> UC1
+
+User --> UC2
+
+User --> UC3
+
+User --> UC4
+
+User --> UC5
+
+
+Officer --> UC1
+
+Officer --> UC6
+
+Officer --> UC7
+
+Officer --> UC9
+
+
+Admin --> UC1
+
+Admin --> UC10
+
+Admin --> UC11
+
+Admin --> UC12
+
+Admin --> UC14
+
+
+Leader --> UC1
+
+Leader --> UC14
+
+Leader --> UC15
+
+Leader --> UC16
+
+
+' --- Hubungan Antar Use Case ---
+
+
+UC3 .> UC2 : <<include>>
+
+UC9 .> UC7 : <<extend>>
+
+
+@enduml 

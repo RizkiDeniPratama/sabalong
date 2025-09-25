@@ -1,0 +1,97 @@
+@startuml
+' Diagram Class untuk struktur data utama
+
+title Diagram Class Sistem Helpdesk
+
+class User {
+
+    id: UUID
+
+    name: String
+
+    email: String
+
+    role: Role (Enum)
+
+    instansi: String
+
+    createTicket()
+
+    viewTickets()
+    }
+
+class Ticket {
+
+    id: UUID
+
+    ticketNumber: String
+
+    title: String
+
+    status: Status (Enum)
+
+    priority: Priority (Enum)
+
+    createdAt: DateTime
+
+    completedAt: DateTime
+
+    updateStatus()
+
+    addComment()
+    }
+
+class Service {
+
+    id: UUID
+
+    name: String
+
+    description: String
+
+    defaultSLA: Integer (jam)
+    }
+
+class Feedback {
+
+    id: UUID
+
+    rating: Integer
+
+    review: String
+
+    createdAt: DateTime
+    }
+
+' Menambahkan Enum untuk Role, Status, dan Priority
+enum Role {
+PEMOHON
+PETUGAS
+ADMIN
+PIMPINAN
+}
+
+enum Status {
+BARU
+DIKERJAKAN
+SELESAI
+DITOLAK
+}
+
+enum Priority {
+RENDAH
+SEDANG
+TINGGI
+}
+
+' Relasi antar class
+User "1" -- "0.." Ticket : "mengajukan"
+Service "1" -- "0.." Ticket : "terkait"
+User "1" -- "0..*" Ticket : "ditugaskan kepada" (sebagai Petugas)
+Ticket "1" -- "0..1" Feedback : "memiliki"
+
+User -- Role
+Ticket -- Status
+Ticket -- Priority
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+' Diagram Activity untuk Alur Penanganan Tiket
+
+title Alur Proses Penanganan Tiket
+
+|Pemohon|
+start
+:Login;
+:Pilih layanan dari katalog;
+:Mengisi detail & mengajukan tiket;
+
+|Sistem|
+:Membuat tiket baru;
+:Menetapkan SLA & Prioritas;
+:Menugaskan ke Petugas terkait;
+:Mengirim notifikasi ke Petugas;
+
+|Petugas|
+:Menerima notifikasi tiket;
+:Membuka dan memeriksa tiket;
+:Mengerjakan permintaan;
+:Memperbarui status tiket menjadi "Dikerjakan";
+repeat
+:Melakukan pengerjaan;
+repeat while (belum selesai?) is (ya)
+-> tidak;
+:Memperbarui status tiket menjadi "Selesai";
+
+|Sistem|
+:Mengirim notifikasi ke Pemohon (Tiket Selesai);
+
+|Pemohon|
+:Menerima notifikasi;
+:Memberikan Rating & Feedback;
+
+stop
+
+@enduml

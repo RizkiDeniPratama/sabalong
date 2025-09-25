@@ -1,0 +1,36 @@
+@startuml
+' Diagram Sequence untuk Alur Pengajuan Tiket Baru
+
+title Alur Pengajuan Tiket Layanan Baru
+
+actor User
+participant "Browser (Frontend)" as FE
+participant "Server (Backend)" as BE
+database "Database (PostgreSQL)" as DB
+
+autonumber
+
+User -> FE: Mengisi & Submit Form Pengajuan
+activate FE
+
+FE -> BE: POST /api/tickets (kirim data tiket)
+activate BE
+
+BE -> BE: Validasi data input
+note right: Cek kelengkapan data (judul, layanan, dll)
+
+BE -> DB: Simpan data tiket baru
+activate DB
+DB --> BE: Kembalikan data tiket yang sudah tersimpan (dengan ID)
+deactivate DB
+
+BE -> BE: Kirim Notifikasi (misal: ke email Petugas)
+note right: Proses ini bisa berjalan di background
+
+BE --> FE: Response 201 (Created) + data tiket
+deactivate BE
+
+FE --> User: Tampilkan notifikasi "Tiket Berhasil Dibuat" & nomor tiket
+deactivate FE
+
+@enduml

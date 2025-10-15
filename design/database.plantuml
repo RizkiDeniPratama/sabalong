@@ -1,0 +1,64 @@
+@startuml
+!theme plain
+title "ERD - Sistem Helpdesk SABALONG"
+
+entity "Users" as users {
+  + **userId** [PK] : UUID
+  --
+  - name : String
+  - email : String <<UNIQUE>>
+  - password : String
+  - role : Enum (PEMOHON, PETUGAS, PIMPINAN, ADMIN)
+  - instansi : String
+  - lokasi : String
+}
+
+entity "Services" as services {
+  + **serviceId** [PK] : UUID
+  --
+  - name : String <<UNIQUE>>
+  - description : Text
+  - slaHours : Integer
+}
+
+entity "Tickets" as tickets {
+  + **ticketId** [PK] : UUID
+  --
+  - ticketNumber : String <<UNIQUE>>
+  - title : String
+  - status : Enum (ONPROGRESS, SELESAI, ESKALASI)
+  - priority : Enum (RENDAH, SEDANG, TINGGI)
+  - createdAt : DateTime
+  ..
+  # *requesterId* [FK] : UUID
+  # *serviceId* [FK] : UUID
+  # *assigneeId* [FK] : UUID (nullable)
+}
+
+entity "TicketUpdates" as updates {
+  + **updateId** [PK] : UUID
+  --
+  - content : Text
+  - createdAt : DateTime
+  ..
+  # *ticketId* [FK] : UUID
+  # *authorId* [FK] : UUID
+}
+
+entity "Feedbacks" as feedbacks {
+  + **feedbackId** [PK] : UUID
+  --
+  - rating : Integer
+  - review : Text
+  ..
+  # *ticketId* [FK] : UUID <<UNIQUE>>
+}
+
+' Relasi Antar Tabel
+users     "1" ||--o{ "0..*" tickets   : "membuat"
+users     "1" ||--o{ "0..*" tickets   : "ditugaskan ke"
+users     "1" ||--o{ "0..*" updates   : "menulis"
+services  "1" ||--o{ "0..*" tickets   : "berdasarkan"
+tickets   "1" ||--o{ "0..*" updates   : "memiliki riwayat"
+tickets   "1" }|--|| "1"    feedbacks : "mendapat"
+@enduml

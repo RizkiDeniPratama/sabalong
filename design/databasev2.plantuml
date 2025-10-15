@@ -1,0 +1,311 @@
+@startuml Helpdesk_Simple_ERD
+
+' ============================================
+' ERD SEDERHANA UNTUK PRESENTASI
+' Dengan penjelasan garis yang jelas
+' ============================================
+
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 100
+skinparam backgroundColor #FAFAFA
+skinparam roundcorner 10
+skinparam shadowing false
+
+skinparam entity {
+    BackgroundColor #E8F4F8
+    BorderColor #0277BD
+    BorderThickness 2.5
+    FontSize 13
+    FontStyle bold
+    AttributeFontSize 11
+}
+
+skinparam arrow {
+    Color #D32F2F
+    Thickness 3
+}
+
+' ============================================
+' LAYER 1: MASTER DATA (Kiri Atas)
+' ============================================
+
+package "📋 MASTER DATA" #F5F5F5 {
+    entity "roles" as roles {
+        **🔑 id**
+        --
+        role_name
+        (user, petugas, admin, pimpinan)
+    }
+    
+    entity "users" as users {
+        **🔑 id**
+        --
+        🔗 role_id
+        nama
+        email
+        password
+        instansi
+        **is_available** ← penting!
+    }
+    
+    entity "skills" as skills {
+        **🔑 id**
+        --
+        skill_name
+        (Web Dev, Network, etc)
+    }
+    
+    entity "user_skills" as user_skills {
+        **🔑 id**
+        --
+        🔗 user_id
+        🔗 skill_id
+        level (expert/advanced/etc)
+    }
+}
+
+' ============================================
+' LAYER 2: KONFIGURASI (Kanan Atas)
+' ============================================
+
+package "⚙️ KONFIGURASI" #FFF3E0 {
+    entity "sla_config" as sla_config {
+        **🔑 id**
+        --
+        sla_name (Express/Standard)
+        response_hours
+        resolution_hours
+    }
+    
+    entity "service_catalog" as service_catalog {
+        **🔑 id**
+        --
+        🔗 required_skill_id
+        🔗 sla_id
+        nama_layanan
+        priority_level
+    }
+}
+
+' ============================================
+' LAYER 3: TICKETING CORE (Tengah)
+' ============================================
+
+package "🎫 SISTEM TICKETING" #E8F5E9 {
+    entity "tickets" as tickets {
+        **🔑 id**
+        ticket_number
+        --
+        🔗 user_id (pemohon)
+        🔗 service_id
+        🔗 assigned_to (petugas)
+        --
+        judul_permohonan
+        status
+        priority
+        response_deadline
+        resolution_deadline
+    }
+}
+
+' ============================================
+' LAYER 4: TRACKING (Bawah)
+' ============================================
+
+package "📊 TRACKING & FEEDBACK" #FCE4EC {
+    entity "ticket_logs" as ticket_logs {
+        **🔑 id**
+        --
+        🔗 ticket_id
+        🔗 action_by
+        action_type
+        old_value → new_value
+    }
+    
+    entity "feedbacks" as feedbacks {
+        **🔑 id**
+        --
+        🔗 ticket_id (unique!)
+        🔗 user_id
+        rating ⭐
+        review
+    }
+    
+    entity "notifications" as notifications {
+        **🔑 id**
+        --
+        🔗 user_id
+        🔗 ticket_id
+        type
+        message
+        is_read
+    }
+}
+
+' ============================================
+' RELASI - DENGAN LABEL JELAS
+' ============================================
+
+' Master Data Relations
+roles ||--o{ users : "1 role → banyak user"
+note on link
+  Contoh:
+  Role "petugas" dimiliki
+  oleh Andi, Budi, Candra
+end note
+
+users ||--o{ tickets : "1 petugas (assigned_to)\n→ bisa kerja banyak tiket"
+note on link #FFCCBC
+  **RELASI PETUGAS**
+  Mas Andi lagi
+  kerja 5 tiket
+end note
+
+' Tracking Relations
+tickets ||--o{ ticket_logs : "1 tiket → punya banyak log aktivitas"
+note on link #F0F4C3
+  **AUDIT TRAIL**
+  Semua perubahan dicatat:
+  • Siapa yang ubah
+  • Kapan diubah
+  • Dari apa ke apa
+end note
+
+users ||--o{ ticket_logs : "1 user → bisa melakukan banyak aksi"
+
+tickets ||--|| feedbacks : "1 tiket = TEPAT 1 feedback"
+note on link #E1BEE7
+  **ATURAN KETAT**
+  1 tiket hanya boleh
+  1 feedback, tidak boleh lebih!
+end note
+
+users ||--o{ feedbacks : "1 user → bisa kasih banyak feedback\n(untuk tiket berbeda)"
+
+users ||--o{ notifications : "1 user → terima banyak notifikasi"
+tickets ||--o{ notifications : "1 tiket → generate banyak notifikasi"
+
+' ============================================
+' LEGENDS & NOTES
+' ============================================
+
+legend top left
+  **PANDUAN MEMBACA DIAGRAM**
+  ━━━━━━━━━━━━━━━━━━━━━━━━
+  
+  **Simbol:**
+  🔑 = Primary Key (Kunci Utama)
+  🔗 = Foreign Key (Kunci Asing/Relasi)
+  
+  **Garis Relasi:**
+  <b>||</b>  = Tepat SATU (exactly one)
+  <b>|o</b>  = Nol atau SATU (zero or one)
+  <b>o{</b>  = Nol atau BANYAK (zero or many)
+  <b>|{</b>  = Satu atau BANYAK (one or many)
+  
+  **Contoh Membaca:**
+  roles <b>||--o{</b> users
+  Artinya: 1 role bisa dimiliki 0 atau banyak user
+  
+  users <b>||--o{</b> tickets
+  Artinya: 1 user bisa membuat 0 atau banyak tiket
+  
+  tickets <b>||--||</b> feedbacks
+  Artinya: 1 tiket = tepat 1 feedback (tidak lebih!)
+end legend
+
+note top of tickets #FFE082
+  **TABEL PALING PENTING! 🎫**
+  ═══════════════════════════
+  Ini adalah JANTUNG sistem
+  
+  **Field Krusial:**
+  • user_id → Siapa pemohon?
+  • assigned_to → Petugas siapa?
+  • service_id → Layanan apa?
+  • status → Statusnya apa?
+  • deadline → Kapan harus selesai?
+  
+  **Alur Status:**
+  pending → assigned → in_progress
+  → completed → closed
+end note
+
+note bottom of users #B2DFDB
+  **Field is_available:**
+  ═══════════════════
+  • true = Petugas kosong
+  • false = Sedang kerja
+  
+  Dipakai untuk AUTO-ASSIGN
+  tiket ke petugas yang lagi
+  kosong!
+end note
+
+note right of sla_config #FFCCBC
+  **SLA = Service Level Agreement**
+  ════════════════════════════════
+  Jaminan waktu pengerjaan:
+  
+  Express: 2 jam respon, 8 jam selesai
+  Standard: 4 jam respon, 24 jam selesai
+  Extended: 8 jam respon, 72 jam selesai
+end note
+
+' ============================================
+' FLOW EXPLANATION
+' ============================================
+
+note bottom of service_catalog
+  **ALUR AUTO-ASSIGN:**
+  ════════════════════
+  1. User pilih layanan
+     (dari service_catalog)
+  2. Sistem cek: layanan ini
+     butuh skill apa?
+  3. Cari petugas yang punya
+     skill itu & lagi kosong
+     (is_available = true)
+  4. Assign tiket ke petugas
+end note
+
+@enduml--o{ user_skills : "1 user → banyak skill"
+skills ||--o{ user_skills : "1 skill → dimiliki banyak user"
+
+note right of user_skills
+  **Tabel Penghubung**
+  Many-to-Many antara
+  users dan skills
+  
+  Contoh:
+  • Andi: Web Dev (expert)
+  • Andi: Database (intermediate)
+end note
+
+' Service Configuration
+skills ||--o{ service_catalog : "1 skill → butuh di banyak layanan"
+note on link #FFE082
+  Contoh:
+  Skill "Web Dev" dipakai
+  untuk layanan:
+  • Perbaikan Website
+  • Install CMS
+  • Update Konten
+end note
+
+sla_config ||--o{ service_catalog : "1 SLA → untuk banyak layanan"
+
+' Ticketing Relations
+users ||--o{ tickets : "1 user (pemohon)\n→ bisa buat banyak tiket"
+note on link #B2DFDB
+  **RELASI PEMOHON**
+  Pak Budi bisa buat
+  10 tiket berbeda
+end note
+
+service_catalog ||--o{ tickets : "1 layanan → diminta di banyak tiket"
+
+users || 
+
+@enduml

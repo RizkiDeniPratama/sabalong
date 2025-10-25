@@ -77,6 +77,7 @@ model UserSkill {
   id         Int      @id @default(autoincrement())
   user_id    Int
   skill_id   Int
+  level      String   @default("junior") @db.VarChar(20)
   created_at DateTime @default(now())
 
   // Relasi (Kolom 'level' dihapus sesuai diskusi)
@@ -89,7 +90,7 @@ model UserSkill {
 
 model SlaConfig {
   id               Int              @id @default(autoincrement())
-  sla_name         String           @db.VarChar(100)
+  sla_name         String           @unique @db.VarChar(100) 
   response_hours   Int
   resolution_hours Int
   description      String?          @db.Text
@@ -121,11 +122,11 @@ model ServiceSkill {
 
 model ServiceCatalog {
   id             Int            @id @default(autoincrement())
-  nama_layanan   String         @db.VarChar(150)
+  nama_layanan   String         @unique @db.VarChar(150)
   deskripsi      String?        @db.Text
   kategori       String?        @db.VarChar(50)
   sla_id         Int
-  priority_level String         @db.VarChar(20) // 'low', 'medium', 'high'
+  default_priority String         @db.VarChar(20) // 'low', 'medium', 'high'
   is_active      Boolean        @default(true)
   icon           String?        @db.VarChar(100)
   created_at     DateTime       @default(now())
@@ -148,6 +149,7 @@ model Ticket {
   ticket_number       String        @unique @db.VarChar(20)
   judul_permohonan    String        @db.VarChar(200)
   deskripsi           String        @db.Text
+  attachment          String?       @db.VarChar(500)
   priority            String        @db.VarChar(20)
   status              String        @db.VarChar(20) @default("pending")
   eskalasi_reason     String?       @db.Text

@@ -17,16 +17,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 // --- Database connection test (optional) ---
-async function testDbConnection() {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    console.log("✅ Database connection successful!");
-  } catch (error) {
-    console.error("❌ Failed to connect to the database:", error.message);
-    process.exit(1);
-  }
-}
-testDbConnection();
+// async function testDbConnection() {
+//   try {
+//     await prisma.$queryRaw`SELECT 1`;
+//     console.log("✅ Database connection successful!");
+//   } catch (error) {
+//     console.error("❌ Failed to connect to the database:", error.message);
+//     process.exit(1);
+//   }
+// }
+// testDbConnection();
 
 // --- Root route ---
 app.get("/", (req, res) => {

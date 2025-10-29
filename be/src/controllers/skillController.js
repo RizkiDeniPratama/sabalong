@@ -13,6 +13,27 @@ export async function getAllSkills(req, res) {
   }
 }
 
+export async function getSkillById(req, res) {
+  const { id } = req.params;
+  try {
+    const skill = await prisma.skill.findUnique({
+      where: { id: parseInt(id) },
+    });
+    if (!skill) {
+      return res.status(404).json({
+        success: false,
+      });
+    }
+    res.json({ success: true, data: skill });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Gagal mengambil data skill",
+      error: error.message,
+    });
+  }
+}
+
 export async function createSkill(req, res) {
   try {
     const { skill_name, skill_description, kategori } = req.body;

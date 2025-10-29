@@ -9,6 +9,7 @@ router.use(authenticate);
 
 // GET /api/roles - Bisa diakses semua role yang login
 router.get("/", skillController.getAllSkills);
+router.get("/:id", skillController.getSkillById);
 
 // POST, PUT, DELETE /api/roles - HANYA BISA DIAKSES ADMIN
 router.post("/", authorize("admin"), skillController.createSkill);

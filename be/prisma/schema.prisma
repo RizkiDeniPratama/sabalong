@@ -1,0 +1,240 @@
+// ============================================
+// Prisma Schema - SABALONG
+// Diskominfotiksandi Kabupaten Sumbawa
+// FINAL VERSION - SIAP MIGRASI
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MASTER DATA
+// ============================================
+
+model Role {
+  id               Int      @id @default(autoincrement())
+  role_name        String   @unique @db.VarChar(50)
+  role_description String?  @db.Text
+  created_at       DateTime @default(now())
+  users            User[]
+
+  @@map("roles")
+}
+
+model User {
+  id                Int            @id @default(autoincrement())
+  role_id           Int
+  nama              String         @db.VarChar(100)
+  email             String         @unique @db.VarChar(100)
+  password          String         @db.VarChar(255)
+  instansi          String?        @db.VarChar(100)
+  alamat            String?        @db.Text // Menggantikan 'lokasi'
+  no_telepon        String?        @db.VarChar(20)
+  avatar            String?        @db.VarChar(255)
+  is_active         Boolean        @default(true)
+  is_available      Boolean        @default(true) // Untuk logika penugasan petugas
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
+
+  // Relasi
+  role              Role           @relation(fields: [role_id], references: [id], onDelete: Restrict)
+  skills            UserSkill[]
+  
+  // Relasi Ganda ke Ticket (Penting)
+  ticketsAsRequester Ticket[]       @relation("RequesterTickets")
+  ticketsAsAssignee  Ticket[]       @relation("AssignedTickets")
+  ticketsAsEscalator Ticket[]       @relation("EscalatorTickets")
+
+  ticketLogs        TicketLog[]
+  feedbacks         Feedback[]
+  notifications     Notification[]
+
+  @@map("users")
+  @@index([role_id, is_available])
+}
+
+model Skill {
+  id                Int            @id @default(autoincrement())
+  skill_name        String         @unique @db.VarChar(100)
+  skill_description String?        @db.Text
+  kategori          String?        @db.VarChar(50)
+  created_at        DateTime       @default(now())
+  
+  // Relasi Many-to-Many
+  users             UserSkill[]
+  services          ServiceSkill[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  skill_id   Int
+  level      String   @default("junior") @db.VarChar(20)
+  created_at DateTime @default(now())
+
+  // Relasi (Kolom 'level' dihapus sesuai diskusi)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, skill_id]) // Memastikan 1 user tidak bisa punya skill duplikat
+  @@map("user_skills")
+}
+
+model SlaConfig {
+  id               Int              @id @default(autoincrement())
+  sla_name         String           @unique @db.VarChar(100) 
+  response_hours   Int
+  resolution_hours Int
+  description      String?          @db.Text
+  is_active        Boolean          @default(true)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+  services         ServiceCatalog[]
+
+  @@map("sla_config")
+}
+
+// ============================================
+// SERVICE CATALOG
+// ============================================
+
+// Tabel Pivot untuk Relasi Service <-> Skill
+model ServiceSkill {
+  id         Int            @id @default(autoincrement())
+  service_id Int
+  skill_id   Int
+  
+  // Relasi
+  service    ServiceCatalog @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  skill      Skill          @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([service_id, skill_id])
+  @@map("service_skills")
+}
+
+model ServiceCatalog {
+  id             Int            @id @default(autoincrement())
+  nama_layanan   String         @unique @db.VarChar(150)
+  deskripsi      String?        @db.Text
+  kategori       String?        @db.VarChar(50)
+  sla_id         Int
+  default_priority String         @db.VarChar(20) // 'low', 'medium', 'high'
+  is_active      Boolean        @default(true)
+  icon           String?        @db.VarChar(100)
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  // Relasi
+  sla            SlaConfig      @relation(fields: [sla_id], references: [id], onDelete: Restrict)
+  skills         ServiceSkill[] // Menggantikan required_skill_id
+  tickets        Ticket[]
+
+  @@map("service_catalog")
+}
+
+// ============================================
+// TICKETING SYSTEM
+// ============================================
+
+model Ticket {
+  id                  Int           @id @default(autoincrement())
+  ticket_number       String        @unique @db.VarChar(20)
+  judul_permohonan    String        @db.VarChar(200)
+  deskripsi           String        @db.Text
+  attachment          String?       @db.VarChar(500)
+  priority            String        @db.VarChar(20)
+  status              String        @db.VarChar(20) @default("pending")
+  eskalasi_reason     String?       @db.Text
+  response_deadline   DateTime
+  resolution_deadline DateTime
+  first_response_at   DateTime?
+  completed_at        DateTime?
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+
+  // Foreign Keys untuk 3 Relasi ke User
+  user_id             Int           // 1. Pemohon
+  assigned_to_id      Int?          // 2. Petugas
+  eskalasi_from_id    Int?          // 3. Yang melakukan eskalasi
+  
+  service_id          Int
+
+  // Relasi
+  service             ServiceCatalog @relation(fields: [service_id], references: [id], onDelete: Restrict)
+  
+  // Definisi 3 Relasi ke User
+  requester           User           @relation("RequesterTickets", fields: [user_id], references: [id], onDelete: Restrict)
+  assignee            User?          @relation("AssignedTickets", fields: [assigned_to_id], references: [id], onDelete: SetNull)
+  escalator           User?          @relation("EscalatorTickets", fields: [eskalasi_from_id], references: [id], onDelete: SetNull)
+
+  logs                TicketLog[]
+  feedback            Feedback?
+  notifications       Notification[]
+
+  @@map("tickets")
+  @@index([status, assigned_to_id])
+}
+
+model TicketLog {
+  id          Int      @id @default(autoincrement())
+  ticket_id   Int
+  action_by   Int
+  action_type String   @db.VarChar(50)
+  old_value   String?  @db.VarChar(100)
+  new_value   String?  @db.VarChar(100)
+  notes       String?  @db.Text
+  created_at  DateTime @default(now())
+  
+  // Relasi
+  ticket      Ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [action_by], references: [id], onDelete: Restrict)
+
+  @@map("ticket_logs")
+  @@index([ticket_id, created_at])
+}
+
+// ============================================
+// FEEDBACK & NOTIFICATIONS
+// ============================================
+
+model Feedback {
+  id           Int      @id @default(autoincrement())
+  ticket_id    Int      @unique
+  user_id      Int
+  rating       Int
+  review       String?  @db.Text
+  is_anonymous Boolean  @default(false)
+  created_at   DateTime @default(now())
+  
+  // Relasi
+  ticket       Ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Restrict)
+
+  @@map("feedbacks")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  ticket_id Int?
+  type      String   @db.VarChar(50)
+  title     String   @db.VarChar(150)
+  message   String   @db.Text
+  is_read   Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Relasi
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ticket    Ticket?  @relation(fields: [ticket_id], references: [id], onDelete: SetNull)
+
+  @@map("notifications")
+  @@index([user_id, is_read])
+}

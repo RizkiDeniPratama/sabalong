@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 // --- Root route ---
-app.use("/api", routes);
+app.use("/sabalong", routes);
 app.get("/", (req, res) => {
   res.json({
     success: true,

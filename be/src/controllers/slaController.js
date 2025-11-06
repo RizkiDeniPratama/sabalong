@@ -1,10 +1,5 @@
 import prisma from "../config/prisma.js";
 
-/**
- * Mendapatkan semua konfigurasi SLA
- * Rute: GET /api/slas
- * Akses: Semua user terautentikasi
- */
 export async function getAllSlas(req, res) {
   try {
     const slas = await prisma.slaConfig.findMany({
@@ -22,11 +17,6 @@ export async function getAllSlas(req, res) {
   }
 }
 
-/**
- * Membuat konfigurasi SLA baru
- * Rute: POST /api/slas
- * Akses: Admin
- */
 export async function createSla(req, res) {
   try {
     const {
@@ -72,11 +62,6 @@ export async function createSla(req, res) {
   }
 }
 
-/**
- * Mengupdate konfigurasi SLA
- * Rute: PUT /api/slas/:id
- * Akses: Admin
- */
 export async function updateSla(req, res) {
   const { id } = req.params;
   const { sla_name, response_hours, resolution_hours, description, is_active } =
@@ -119,11 +104,6 @@ export async function updateSla(req, res) {
   }
 }
 
-/**
- * Menghapus konfigurasi SLA
- * Rute: DELETE /api/slas/:id
- * Akses: Admin
- */
 export async function deleteSla(req, res) {
   const { id } = req.params;
   try {

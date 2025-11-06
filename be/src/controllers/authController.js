@@ -51,7 +51,6 @@ import { hashPassword, comparePassword, generateToken } from "../utils/auth.js";
 //   }
 // }
 
-// Login (untuk semua role)
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -108,7 +107,66 @@ export async function login(req, res) {
   }
 }
 
-// Logout (hanya formalitas, token dihapus di client)
 export async function logout(req, res) {
   res.json({ success: true, message: "Logout berhasil" });
+}
+
+export async function changePassword(req, res) {
+  try {
+    const { passwordLama, passwordBaru } = req.body;
+    const { id } = req.user;
+    // 1. Validasi input
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Password lama dan password baru wajib diisi",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      // Aturan password minimal
+      return res.status(400).json({
+        success: false,
+        message: "Password baru minimal harus 6 karakter",
+      });
+    }
+
+    // 2. Ambil user (termasuk password-nya) dari DB
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User tidak ditemukan" });
+    }
+
+    // 3. Bandingkan password lama
+    const isPasswordValid = await comparePassword(oldPassword, user.password);
+    if (!isPasswordValid) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Password lama salah" });
+    }
+
+    // 4. Hash password baru
+    const hashedNewPassword = await hashPassword(newPassword);
+
+    // 5. Update password di DB
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedNewPassword,
+      },
+    });
+
+    res.json({ success: true, message: "Password berhasil diperbarui" });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Gagal mengganti password",
+      error: error.message,
+    });
+  }
 }

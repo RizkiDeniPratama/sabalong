@@ -59,11 +59,14 @@
 
 <script setup>
 import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, InfoCircleIcon } from '@/icons'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from '../../../store/auth'
 
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
+const authStore = useAuthStore()
+const router = useRouter()
 
 const menuItems = [
   { href: '/profile', icon: UserCircleIcon, text: 'Edit profile' },
@@ -82,7 +85,9 @@ const closeDropdown = () => {
 const signOut = () => {
   // Implement sign out logic here
   console.log('Signing out...')
+  authStore.logout()
   closeDropdown()
+  router.push({ name: 'Signin' })
 }
 
 const handleClickOutside = (event) => {

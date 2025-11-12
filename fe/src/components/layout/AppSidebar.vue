@@ -13,12 +13,7 @@
     @mouseenter="!isExpanded && (isHovered = true)"
     @mouseleave="isHovered = false"
   >
-    <div
-      :class="[
-        'py-8 flex',
-        !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
-      ]"
-    >
+    <div :class="['py-8 flex', !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start']">
       <router-link to="/">
         <img
           v-if="isExpanded || isHovered || isMobileOpen"
@@ -36,27 +31,17 @@
           width="150"
           height="40"
         />
-        <img
-          v-else
-          src="/images/logo/logo-icon.svg"
-          alt="Logo"
-          width="32"
-          height="32"
-        />
+        <img v-else src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
       </router-link>
     </div>
-    <div
-      class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"
-    >
+    <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
       <nav class="mb-6">
         <div class="flex flex-col gap-4">
-          <div v-for="(menuGroup, groupIndex) in menuGroups" :key="groupIndex">
+          <div v-for="(menuGroup, groupIndex) in roleBasedMenuGroups" :key="groupIndex">
             <h2
               :class="[
                 'mb-4 text-xs uppercase flex leading-[20px] text-gray-400',
-                !isExpanded && !isHovered
-                  ? 'lg:justify-center'
-                  : 'justify-start',
+                !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
               ]"
             >
               <template v-if="isExpanded || isHovered || isMobileOpen">
@@ -75,9 +60,7 @@
                       'menu-item-active': isSubmenuOpen(groupIndex, index),
                       'menu-item-inactive': !isSubmenuOpen(groupIndex, index),
                     },
-                    !isExpanded && !isHovered
-                      ? 'lg:justify-center'
-                      : 'lg:justify-start',
+                    !isExpanded && !isHovered ? 'lg:justify-center' : 'lg:justify-start',
                   ]"
                 >
                   <span
@@ -89,20 +72,15 @@
                   >
                     <component :is="item.icon" />
                   </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="menu-item-text"
-                    >{{ item.name }}</span
-                  >
+                  <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text">{{
+                    item.name
+                  }}</span>
                   <ChevronDownIcon
                     v-if="isExpanded || isHovered || isMobileOpen"
                     :class="[
                       'ml-auto w-5 h-5 transition-transform duration-200',
                       {
-                        'rotate-180 text-brand-500': isSubmenuOpen(
-                          groupIndex,
-                          index
-                        ),
+                        'rotate-180 text-brand-500': isSubmenuOpen(groupIndex, index),
                       },
                     ]"
                   />
@@ -120,18 +98,14 @@
                 >
                   <span
                     :class="[
-                      isActive(item.path)
-                        ? 'menu-item-icon-active'
-                        : 'menu-item-icon-inactive',
+                      isActive(item.path) ? 'menu-item-icon-active' : 'menu-item-icon-inactive',
                     ]"
                   >
                     <component :is="item.icon" />
                   </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="menu-item-text"
-                    >{{ item.name }}</span
-                  >
+                  <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text">{{
+                    item.name
+                  }}</span>
                 </router-link>
                 <transition
                   @enter="startTransition"
@@ -141,8 +115,7 @@
                 >
                   <div
                     v-show="
-                      isSubmenuOpen(groupIndex, index) &&
-                      (isExpanded || isHovered || isMobileOpen)
+                      isSubmenuOpen(groupIndex, index) && (isExpanded || isHovered || isMobileOpen)
                     "
                   >
                     <ul class="mt-2 space-y-1 ml-9">
@@ -152,12 +125,8 @@
                           :class="[
                             'menu-dropdown-item',
                             {
-                              'menu-dropdown-item-active': isActive(
-                                subItem.path
-                              ),
-                              'menu-dropdown-item-inactive': !isActive(
-                                subItem.path
-                              ),
+                              'menu-dropdown-item-active': isActive(subItem.path),
+                              'menu-dropdown-item-inactive': !isActive(subItem.path),
                             },
                           ]"
                         >
@@ -168,12 +137,8 @@
                               :class="[
                                 'menu-dropdown-badge',
                                 {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
+                                  'menu-dropdown-badge-active': isActive(subItem.path),
+                                  'menu-dropdown-badge-inactive': !isActive(subItem.path),
                                 },
                               ]"
                             >
@@ -184,12 +149,8 @@
                               :class="[
                                 'menu-dropdown-badge',
                                 {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
+                                  'menu-dropdown-badge-active': isActive(subItem.path),
+                                  'menu-dropdown-badge-inactive': !isActive(subItem.path),
                                 },
                               ]"
                             >
@@ -212,146 +173,157 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useAuthStore } from '../../store/auth' // <-- 1. IMPORT "OTAK" KITA
 
+// Import semua ikon yang kita butuhkan
 import {
   GridIcon,
-  CalenderIcon,
+  CalenderIcon, // (Kita hapus, tapi biarkan jika perlu)
   UserCircleIcon,
-  ChatIcon,
-  MailIcon,
-  DocsIcon,
+  ListIcon,
+  TableIcon,
+  PageIcon,
   PieChartIcon,
   ChevronDownIcon,
   HorizontalDots,
-  PageIcon,
-  TableIcon,
-  ListIcon,
-  PlugInIcon,
-} from "../../icons";
-import SidebarWidget from "./SidebarWidget.vue";
-import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
-import { useSidebar } from "@/composables/useSidebar";
+  PlugInIcon, // (Kita hapus)
+  BoxCubeIcon, // (Kita hapus)
+} from '../../icons' // <-- Cek path ini, mungkin perlu disesuaikan
+import SidebarWidget from './SidebarWidget.vue'
+import { useSidebar } from '@/composables/useSidebar' // (Hook dari template Anda)
 
-const route = useRoute();
+const route = useRoute()
+const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar()
+const authStore = useAuthStore() // <-- 2. INISIALISASI "OTAK"
 
-const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+// Ambil user role secara reaktif
+const userRole = computed(() => authStore.userRole)
 
-const menuGroups = [
+// --- 3. DEFINISIKAN MENU UNTUK SETIAP ROLE ---
+
+// (Ini adalah menu yang kita diskusikan sebelumnya)
+const userMenu = [
   {
-    title: "Menu",
+    title: 'MENU',
     items: [
+      { icon: GridIcon, name: 'Dashboard Saya', path: '/user/dashboard' },
+      { icon: ListIcon, name: 'Buat Tiket Baru', path: '/user/new-ticket' },
+      { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
+    ],
+  },
+]
+
+const petugasMenu = [
+  {
+    title: 'MENU',
+    items: [
+      { icon: GridIcon, name: 'Dashboard Tugas', path: '/petugas/dashboard' },
+      { icon: TableIcon, name: 'Riwayat Tiket Saya', path: '/petugas/my-tickets' },
+      { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
+    ],
+  },
+]
+
+const adminMenu = [
+  {
+    title: 'MENU',
+    items: [
+      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/' },
+      { icon: TableIcon, name: 'Manajemen Tiket', path: '/admin/manage-tickets' },
+    ],
+  },
+  {
+    title: 'MANAJEMEN',
+    items: [
+      { icon: UserCircleIcon, name: 'Manajemen Pengguna', path: '/admin/manage-users' },
+      { icon: ListIcon, name: 'Manajemen Layanan', path: '/admin/manage-services' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/admin/feedbacks' },
       {
         icon: GridIcon,
-        name: "Dashboard",
-        subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-      },
-      {
-        icon: CalenderIcon,
-        name: "Calendar",
-        path: "/calendar",
-      },
-      {
-        icon: UserCircleIcon,
-        name: "User Profile",
-        path: "/profile",
-      },
-
-      {
-        name: "Forms",
-        icon: ListIcon,
+        name: 'Pengaturan Master',
         subItems: [
-          { name: "Form Elements", path: "/form-elements", pro: false },
-        ],
-      },
-      {
-        name: "Tables",
-        icon: TableIcon,
-        subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-      },
-      {
-        name: "Pages",
-        icon: PageIcon,
-        subItems: [
-          { name: "Black Page", path: "/blank", pro: false },
-          { name: "404 Page", path: "/error-404", pro: false },
+          { name: 'Kelola SLA', path: '/admin/manage-sla' },
+          { name: 'Kelola Skills', path: '/admin/manage-skills' },
+          { name: 'Kelola Roles', path: '/admin/manage-roles' },
         ],
       },
     ],
   },
   {
-    title: "Others",
+    title: 'AKUN',
+    items: [{ icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' }],
+  },
+]
+
+const pimpinanMenu = [
+  {
+    title: 'MENU',
     items: [
-      {
-        icon: PieChartIcon,
-        name: "Charts",
-        subItems: [
-          { name: "Line Chart", path: "/line-chart", pro: false },
-          { name: "Bar Chart", path: "/bar-chart", pro: false },
-        ],
-      },
-      {
-        icon: BoxCubeIcon,
-        name: "Ui Elements",
-        subItems: [
-          { name: "Alerts", path: "/alerts", pro: false },
-          { name: "Avatars", path: "/avatars", pro: false },
-          { name: "Badge", path: "/badge", pro: false },
-          { name: "Buttons", path: "/buttons", pro: false },
-          { name: "Images", path: "/images", pro: false },
-          { name: "Videos", path: "/videos", pro: false },
-        ],
-      },
-      {
-        icon: PlugInIcon,
-        name: "Authentication",
-        subItems: [
-          { name: "Signin", path: "/signin", pro: false },
-          { name: "Signup", path: "/signup", pro: false },
-        ],
-      },
-      // ... Add other menu items here
+      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/admin/dashboard' },
+      { icon: TableIcon, name: 'Daftar Tiket', path: '/admin/manage-tickets' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/admin/feedbacks' },
+      { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },
-];
+]
 
-const isActive = (path) => route.path === path;
+// --- 4. HAPUS 'menuGroups' YANG LAMA ---
+// const menuGroups = [ ... (HAPUS SEMUA BLOK BESAR INI) ... ]
+
+// --- 5. BUAT COMPUTED PROPERTY "PINTAR" ---
+const roleBasedMenuGroups = computed(() => {
+  switch (userRole.value) {
+    case 'admin':
+      return adminMenu
+    case 'pimpinan':
+      return pimpinanMenu
+    case 'petugas':
+      return petugasMenu
+    case 'user':
+      return userMenu
+    default:
+      return []
+  }
+})
+
+const isActive = (path) => route.path === path
 
 const toggleSubmenu = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
-  openSubmenu.value = openSubmenu.value === key ? null : key;
-};
+  const key = `${groupIndex}-${itemIndex}`
+  openSubmenu.value = openSubmenu.value === key ? null : key
+}
 
 const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.some((group) =>
+  return roleBasedMenuGroups.value.some((group) =>
     group.items.some(
-      (item) =>
-        item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
-    )
-  );
-});
+      (item) => item.subItems && item.subItems.some((subItem) => isActive(subItem.path)),
+    ),
+  )
+})
 
 const isSubmenuOpen = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
+  const key = `${groupIndex}-${itemIndex}`
+  const items = roleBasedMenuGroups.value[groupIndex]?.items
+  if (!items) return false
+
   return (
     openSubmenu.value === key ||
     (isAnySubmenuRouteActive.value &&
-      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
-        isActive(subItem.path)
-      ))
-  );
-};
+      items[itemIndex]?.subItems?.some((subItem) => isActive(subItem.path)))
+  )
+}
 
 const startTransition = (el) => {
-  el.style.height = "auto";
-  const height = el.scrollHeight;
-  el.style.height = "0px";
-  el.offsetHeight; // force reflow
-  el.style.height = height + "px";
-};
+  el.style.height = 'auto'
+  const height = el.scrollHeight
+  el.style.height = '0px'
+  el.offsetHeight // force reflow
+  el.style.height = height + 'px'
+}
 
 const endTransition = (el) => {
-  el.style.height = "";
-};
+  el.style.height = ''
+}
 </script>

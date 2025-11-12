@@ -8,8 +8,8 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get("/", userController.getAllUsers);
-router.get("/:id", authorize("admin", "petugas"), userController.getUserById);
 router.get("/profile", userController.getProfile);
+router.get("/:id", authorize("admin", "petugas"), userController.getUserById);
 
 // Hanya ADMIN yang bisa Create, Update, dan Delete
 router.post("/", authorize("admin"), userController.createUser);

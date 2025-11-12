@@ -91,8 +91,12 @@ export async function getUserById(req, res) {
 }
 
 export async function getProfile(req, res) {
+  console.log("req.user = ", req.user);
+
   try {
     const { id } = req.user;
+    console.log("ini id = ", req.user);
+    console.log("hahahhaha");
 
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },

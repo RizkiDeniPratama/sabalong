@@ -13,6 +13,7 @@
       <div v-else-if="stats" class="grid grid-cols-12 gap-4 md:gap-6">
         <div class="col-span-12">
           <EcommerceMetrics
+            v-if="stats"
             :petugasStats="stats.petugas"
             :userStats="stats.users"
             :ticketPending="stats.tickets.pending"
@@ -21,11 +22,11 @@
         </div>
 
         <div class="col-span-12 xl:col-span-4">
-          <MonthlyTarget :rating="stats.feedbacks" />
+          <MonthlyTarget v-if="stats" :rating="stats.feedbacks" />
         </div>
 
         <div class="col-span-12 xl:col-span-8">
-          <RecentOrders :ticketStats="stats.tickets" />
+          <RecentOrders v-if="recentTickets" :tickets="recentTickets" />
         </div>
       </div>
     </DefaultLayout>
@@ -42,7 +43,6 @@ import EcommerceMetrics from '../../components/ecommerce/EcommerceMetrics.vue'
 import MonthlyTarget from '../../components/ecommerce/MonthlyTarget.vue'
 import RecentOrders from '../../components/ecommerce/RecentOrders.vue'
 
-// Definisikan Tipe Data (agar TS senang)
 interface TicketStats {
   pending: number
   on_progress: number
@@ -69,9 +69,24 @@ interface DashboardStats {
   petugas: PetugasStats
   users: UserStats
 }
+interface TicketItem {
+  id: number
+  ticket_number: string
+  status: string
+  requester: {
+    nama: string
+  }
+  assignee: {
+    nama: string | null // Bisa jadi null jika belum ditugaskan
+  }
+  service: {
+    nama_layanan: string
+  }
+}
 
 // Siapkan "wadah" reaktif
 const stats = ref<DashboardStats | null>(null)
+const recentTickets = ref<TicketItem[] | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -79,8 +94,13 @@ const error = ref<string | null>(null)
 const fetchDashboardStats = async () => {
   try {
     loading.value = true
-    const response = await api.get('/dashboard-analytics')
-    stats.value = response.data.data
+    const [statsResponse, ticketsResponse] = await Promise.all([
+      api.get('/dashboard-analytics'),
+      api.get('/tickets?limit=5'),
+    ])
+
+    stats.value = statsResponse.data.data
+    recentTickets.value = ticketsResponse.data.data
   } catch (err: any) {
     console.error('Gagal mengambil statistik:', err)
     error.value = err

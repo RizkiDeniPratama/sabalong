@@ -169,12 +169,28 @@
         >
           <div class="flex items-center justify-center z-1">
             <common-grid-shape />
-            <div class="flex flex-col items-center max-w-xs">
-              <router-link to="/" class="block mb-4">
-                <img width="{231}" height="{48}" src="/images/logo/auth-logo.svg" alt="Logo" />
+
+            <div class="flex flex-col items-center max-w-md px-8">
+              <router-link
+                to="/"
+                class="flex flex-row items-center justify-center gap-2 mb-8 w-full"
+              >
+                <img
+                  class="w-28 md:w-32 h-auto object-contain transition-transform hover:scale-105"
+                  src="../../../images/logo/sabalong.png"
+                  alt="Logo Sabalong"
+                />
+
+                <span
+                  class="text-3xl md:text-4xl font-extrabold text-white tracking-[0.15em] uppercase font-sans leading-none mt-1"
+                >
+                  SABALONG
+                </span>
               </router-link>
-              <p class="text-center text-gray-400 dark:text-white/60">
-                Free and Open-Source Tailwind CSS Admin Dashboard Template
+
+              <p class="text-center text-lg text-gray-300 dark:text-white/80 leading-relaxed">
+                Sistem Helpdesk & Katalog Layanan Digital<br />
+                Diskominfotiksandi Kabupaten Sumbawa
               </p>
             </div>
           </div>

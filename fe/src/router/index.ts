@@ -17,6 +17,132 @@ const router = createRouter({
       },
     },
     {
+      path: '/petugas',
+      name: 'PetugasDashboard',
+      component: () => import('../views/Dashboard/dashboardPetugas.vue'),
+      meta: {
+        title: 'Dashboard Petugas',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/user',
+      name: 'UserDashboard',
+      component: () => import('../views/Dashboard/dashboardUser.vue'),
+      meta: {
+        title: 'Dashboard User',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/manage-users',
+      name: 'Manage User',
+      component: () => import('../views/Pages/manageUsers.vue'),
+      meta: {
+        title: 'Manage Users',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/create-tickets',
+      name: 'Create Tickets',
+      component: () => import('../views/Pages/createTicket.vue'),
+      meta: {
+        title: 'Create Tickets',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/ticket-list',
+      name: 'My Tickets List',
+      component: () => import('../views/Pages/ticketList.vue'),
+      meta: {
+        title: 'My Tickets List',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/manage-tickets',
+      name: 'Manage Tickets',
+      component: () => import('../views/Pages/manageTickets.vue'),
+      meta: {
+        title: 'Manage Tickets',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/detail-ticket/:id',
+      name: 'Ticket Detail',
+      component: () => import('../views/Pages/detailTicket.vue'),
+      meta: {
+        title: 'Ticket Detail',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/manage-services',
+      name: 'Manage Services',
+      component: () => import('../views/Pages/manageServices.vue'),
+      meta: {
+        title: 'Manage Services',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/feedbacks',
+      name: 'Feedbacks',
+      component: () => import('../views/Pages/feedback.vue'),
+      meta: {
+        title: 'Feedbacks',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/manage-sla',
+      name: 'Manage SLA',
+      component: () => import('../views/Pages/manageSLA.vue'),
+      meta: {
+        title: 'Manage SLA',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/manage-roles',
+      name: 'Manage Roles',
+      component: () => import('../views/Pages/manageRoles.vue'),
+      meta: {
+        title: 'Manage Roles',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/manage-skills',
+      name: 'Manage Skills',
+      component: () => import('../views/Pages/manageSkills.vue'),
+      meta: {
+        title: 'Manage Skills',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/notifications',
+      name: 'Notifications',
+      component: () => import('../views/Pages/notifications.vue'),
+      meta: {
+        title: 'Notifications',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/petugas/tickets',
+      name: 'TiketPetugas',
+      component: () => import('../views/Pages/myTicketList.vue'),
+      meta: {
+        title: 'My Tickets',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/calendar',
       name: 'Calendar',
       component: () => import('../views/Others/Calendar.vue'),

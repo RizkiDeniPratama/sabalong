@@ -1,4 +1,4 @@
-# SABALONG (Sistem Aplikasi Bantuan Langsung Online) 
+# SABALONG (Sistem Aplikasi Bantuan Langsung Online)
 
 **Sistem Helpdesk & Katalog Layanan Digital berbasis Ticketing untuk Diskominfotiksandi Kabupaten Sumbawa.**
 
@@ -11,10 +11,11 @@ Proyek ini dikembangkan sebagai bagian dari program magang untuk menciptakan seb
 Saat ini, proses pengajuan layanan digital di Diskominfotiksandi masih tersebar dan belum terintegrasi. Hal ini menghambat pemantauan kinerja, akuntabilitas, dan kualitas pelayanan publik.
 
 **SABALONG** hadir sebagai solusi dengan menyediakan:
-* **Katalog Layanan Digital:** Portal terpusat untuk melihat semua layanan yang tersedia.
-* **Sistem Ticketing:** Setiap permintaan dicatat sebagai tiket yang dapat dilacak progresnya secara *real-time*.
-* **Manajemen SLA:** Setiap tiket memiliki target waktu penyelesaian yang terukur.
-* **Dashboard Monitoring:** Memberikan Pimpinan pandangan menyeluruh terhadap kinerja layanan, efektivitas petugas, dan tingkat kepuasan pengguna.
+
+- **Katalog Layanan Digital:** Portal terpusat untuk melihat semua layanan yang tersedia.
+- **Sistem Ticketing:** Setiap permintaan dicatat sebagai tiket yang dapat dilacak progresnya secara _real-time_.
+- **Manajemen SLA:** Setiap tiket memiliki target waktu penyelesaian yang terukur.
+- **Dashboard Monitoring:** Memberikan Pimpinan pandangan menyeluruh terhadap kinerja layanan, efektivitas petugas, dan tingkat kepuasan pengguna.
 
 ---
 
@@ -29,20 +30,23 @@ Saat ini, proses pengajuan layanan digital di Diskominfotiksandi masih tersebar 
 
 ### 🛠️ Dibangun Dengan (Tech Stack)
 
-* **Frontend:** Next.js (TypeScript) & Tailwind CSS
-* **Backend:** Node.js & Express.js
-* **Database:** PostgreSQL
-* **ORM:** Prisma
+- **Frontend:** Vue.js & Tailwind CSS
+- **Backend:** Node.js & Express.js
+- **Database:** PostgreSQL
+- **ORM:** Prisma
 
 ---
 
 ### 🏁 Memulai (Getting Started)
 
 **Prasyarat:**
-* Node.js (v18 atau lebih baru)
-* PostgreSQL
+
+- Node.js (v18 atau lebih baru)
+- PostgreSQL
 
 **1. Clone Repositori**
+
 ```bash
 git clone [https://github.com/NAMA_USER_ANDA/sabalong-helpdesk.git](https://github.com/NAMA_USER_ANDA/sabalong-helpdesk.git)
 cd sabalong-helpdesk
+```

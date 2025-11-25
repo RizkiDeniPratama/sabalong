@@ -1,13 +1,19 @@
 import express from "express";
 import * as ticketController from "../controllers/ticketController.js";
 import { authenticate, authorize } from "../middlewares/authMiddleware.js";
+import upload from "../middlewares/upload.js";
 
 const router = express.Router();
 
 router.use(authenticate);
 
 // --- CREATE ---
-router.post("/", authorize("user"), ticketController.createTicket);
+router.post(
+  "/",
+  authorize("user"),
+  upload.single("attachment"),
+  ticketController.createTicket
+);
 
 // --- READ ---
 router.get("/", ticketController.getAllTickets);

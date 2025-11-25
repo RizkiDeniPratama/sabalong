@@ -95,8 +95,6 @@ export async function getProfile(req, res) {
 
   try {
     const { id } = req.user;
-    console.log("ini id = ", req.user);
-    console.log("hahahhaha");
 
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
@@ -138,20 +136,19 @@ export async function getProfile(req, res) {
 export async function createUser(req, res) {
   try {
     const {
-      role_id, // Wajib diisi Admin
+      role_id,
       nama,
       email,
-      password, // Password awal
+      password,
       instansi,
       alamat,
       no_telepon,
       is_active,
       is_available,
-      skill_ids, // Array ID skill jika role_id adalah 'petugas'
-      level, // Level 'junior' atau 'senior' jika role_id adalah 'petugas'
+      skills, // Array of objects, contoh: [{ skill_id: 1, level: 'junior' }]
     } = req.body;
+    console.log("ini yg dikirim fe 2 = ", req.body);
 
-    // Validasi input dasar
     if (!role_id || !nama || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -159,30 +156,27 @@ export async function createUser(req, res) {
       });
     }
 
-    // Cek apakah email sudah ada
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email sudah terdaftar" });
+      return res.status(400).json({
+        success: false,
+        message: "Email sudah terdaftar",
+      });
     }
 
-    // Cek apakah role_id valid
     const roleExists = await prisma.role.findUnique({
       where: { id: parseInt(role_id) },
     });
     if (!roleExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Role ID tidak valid" });
+      return res.status(400).json({
+        success: false,
+        message: "Role ID tidak valid",
+      });
     }
 
-    // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Gunakan transaksi jika perlu membuat UserSkill (untuk Petugas)
     const newUser = await prisma.$transaction(async (tx) => {
-      // 1. Buat User dulu
       const user = await tx.user.create({
         data: {
           role_id: parseInt(role_id),
@@ -192,31 +186,30 @@ export async function createUser(req, res) {
           instansi,
           alamat,
           no_telepon,
-          is_active: is_active ?? true, // Default true jika tidak diisi
-          is_available: is_available ?? true, // Default true
+          is_active: is_active ?? true,
+          is_available: is_available ?? true,
         },
       });
 
-      // 2. Jika role adalah 'petugas' dan ada skill_ids, buat UserSkill
       if (
         roleExists.role_name === "petugas" &&
-        skill_ids &&
-        Array.isArray(skill_ids) &&
-        skill_ids.length > 0
+        Array.isArray(skills) &&
+        skills.length > 0
       ) {
-        const userSkillData = skill_ids.map((skillId) => ({
+        const userSkillData = skills.map((skill) => ({
           user_id: user.id,
-          skill_id: parseInt(skillId),
-          level: level || "junior", // Default junior jika level tidak diisi
+          skill_id: parseInt(skill.skill_id),
+          level: skill.level || "junior",
         }));
+
         await tx.userSkill.createMany({
           data: userSkillData,
         });
       }
+
       return user;
     });
 
-    // Ambil data user baru (tanpa password) untuk response
     const createdUser = await prisma.user.findUnique({
       where: { id: newUser.id },
       select: {
@@ -224,6 +217,9 @@ export async function createUser(req, res) {
         email: true,
         nama: true,
         role_id: true,
+        instansi: true,
+        alamat: true,
+        no_telepon: true,
         is_active: true,
         is_available: true,
         role: true,
@@ -238,11 +234,11 @@ export async function createUser(req, res) {
     });
   } catch (error) {
     if (error.code === "P2003") {
-      // Foreign key constraint (misal skill_id tidak valid)
       return res
         .status(400)
         .json({ success: false, message: "Salah satu ID Skill tidak valid." });
     }
+    console.error("Error creating user:", error);
     res.status(500).json({
       success: false,
       message: "Gagal membuat user baru",
@@ -252,25 +248,23 @@ export async function createUser(req, res) {
 }
 
 export async function updateUser(req, res) {
+  console.log("ini yg dikirim fe terbaru = ", req.body);
+
   const { id } = req.params;
   const {
     role_id,
     nama,
-    // email tidak diupdate biasanya, atau perlu proses verifikasi khusus
-    password, // Jika ingin ganti password
+    password,
     instansi,
     alamat,
     no_telepon,
     is_active,
     is_available,
-    skill_ids, // Array ID skill baru untuk petugas
-    level, // Level baru untuk petugas
+    skills, // Array of objects
   } = req.body;
 
   try {
     const userId = parseInt(id);
-
-    // Siapkan data yang akan diupdate
     const dataToUpdate = {
       nama,
       instansi,
@@ -280,7 +274,6 @@ export async function updateUser(req, res) {
       is_available,
     };
 
-    // Update role jika diisi
     if (role_id) {
       const roleExists = await prisma.role.findUnique({
         where: { id: parseInt(role_id) },
@@ -293,47 +286,41 @@ export async function updateUser(req, res) {
       dataToUpdate.role_id = parseInt(role_id);
     }
 
-    // Hash password baru jika diisi
     if (password) {
       dataToUpdate.password = await hashPassword(password);
     }
 
     const updatedUser = await prisma.$transaction(async (tx) => {
-      // 1. Update data dasar User
       const user = await tx.user.update({
         where: { id: userId },
         data: dataToUpdate,
-        include: { role: true }, // Ambil info role untuk cek
+        include: { role: true },
       });
 
-      // 2. Jika user adalah petugas, update skills
+      // Logika untuk mengelola skill berdasarkan role
       if (user.role.role_name === "petugas") {
-        // Hapus skill lama
-        await tx.userSkill.deleteMany({
-          where: { user_id: userId },
-        });
+        // Hanya proses skill jika user adalah 'petugas'
+        if (Array.isArray(skills)) {
+          // Jika ada array 'skills' yang dikirim, perbarui skills
+          await tx.userSkill.deleteMany({ where: { user_id: userId } }); // Hapus yang lama
 
-        // Tambah skill baru jika ada skill_ids
-        if (skill_ids && Array.isArray(skill_ids) && skill_ids.length > 0) {
-          const userSkillData = skill_ids.map((skillId) => ({
-            user_id: user.id,
-            skill_id: parseInt(skillId),
-            level: level || "junior",
-          }));
-          await tx.userSkill.createMany({
-            data: userSkillData,
-          });
+          if (skills.length > 0) {
+            const userSkillData = skills.map((skill) => ({
+              user_id: user.id,
+              skill_id: parseInt(skill.skill_id),
+              level: skill.level || "junior",
+            }));
+            await tx.userSkill.createMany({ data: userSkillData }); // Tambah yang baru
+          }
         }
       } else {
-        // Jika role diubah DARI petugas KE role lain, hapus semua skillnya
-        await tx.userSkill.deleteMany({
-          where: { user_id: userId },
-        });
+        // Jika user bukan 'petugas', pastikan mereka tidak punya skill
+        await tx.userSkill.deleteMany({ where: { user_id: userId } });
       }
+
       return user;
     });
 
-    // Ambil data user yang sudah diupdate (tanpa password)
     const finalUpdatedUser = await prisma.user.findUnique({
       where: { id: updatedUser.id },
       select: {
@@ -344,6 +331,9 @@ export async function updateUser(req, res) {
         is_active: true,
         is_available: true,
         role: true,
+        instansi: true,
+        alamat: true,
+        no_telepon: true,
         skills: { include: { skill: true } },
       },
     });
@@ -364,6 +354,7 @@ export async function updateUser(req, res) {
         .status(400)
         .json({ success: false, message: "Salah satu ID Skill tidak valid." });
     }
+    console.error("Error updating user= ", error);
     res.status(500).json({
       success: false,
       message: "Gagal memperbarui user",

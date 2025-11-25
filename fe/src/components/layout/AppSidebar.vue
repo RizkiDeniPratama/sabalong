@@ -14,24 +14,50 @@
     @mouseleave="isHovered = false"
   >
     <div :class="['py-8 flex', !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start']">
-      <router-link to="/">
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="dark:hidden"
-          src="/images/logo/logo.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="hidden dark:block"
-          src="/images/logo/logo-dark.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img v-else src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
+      <router-link to="/" class="flex items-center gap-3">
+        <!-- Logo saat expanded -->
+        <template v-if="isExpanded || isHovered || isMobileOpen">
+          <!-- Light mode -->
+          <img
+            class="block dark:hidden"
+            src="../../../images/logo/sabalong.png"
+            alt="Logo"
+            width="40"
+            height="40"
+          />
+          <!-- Dark mode -->
+          <img
+            class="hidden dark:block"
+            src="../../../images/logo/sabalong.png"
+            alt="Logo"
+            width="40"
+            height="40"
+          />
+
+          <!-- Teks saat expanded -->
+          <span class="text-xl font-semibold text-gray-800 dark:text-white"> SABALONG </span>
+        </template>
+
+        <!-- Logo saat collapsed -->
+        <template v-else>
+          <!-- Light mode -->
+          <img
+            class="block dark:hidden"
+            src="../../../images/logo/sabalong.png"
+            alt="Logo"
+            width="32"
+            height="32"
+          />
+
+          <!-- Dark mode -->
+          <img
+            class="hidden dark:block"
+            src="../../../images/logo/sabalong.png"
+            alt="Logo"
+            width="32"
+            height="32"
+          />
+        </template>
       </router-link>
     </div>
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
@@ -167,7 +193,6 @@
           </div>
         </div>
       </nav>
-      <SidebarWidget v-if="isExpanded || isHovered || isMobileOpen" />
     </div>
   </aside>
 </template>
@@ -180,7 +205,6 @@ import { useAuthStore } from '../../store/auth' // <-- 1. IMPORT "OTAK" KITA
 // Import semua ikon yang kita butuhkan
 import {
   GridIcon,
-  CalenderIcon, // (Kita hapus, tapi biarkan jika perlu)
   UserCircleIcon,
   ListIcon,
   TableIcon,
@@ -188,8 +212,6 @@ import {
   PieChartIcon,
   ChevronDownIcon,
   HorizontalDots,
-  PlugInIcon, // (Kita hapus)
-  BoxCubeIcon, // (Kita hapus)
 } from '../../icons' // <-- Cek path ini, mungkin perlu disesuaikan
 import SidebarWidget from './SidebarWidget.vue'
 import { useSidebar } from '@/composables/useSidebar' // (Hook dari template Anda)
@@ -208,8 +230,9 @@ const userMenu = [
   {
     title: 'MENU',
     items: [
-      { icon: GridIcon, name: 'Dashboard Saya', path: '/user/dashboard' },
-      { icon: ListIcon, name: 'Buat Tiket Baru', path: '/user/new-ticket' },
+      { icon: GridIcon, name: 'Dashboard Saya', path: '/user' },
+      { icon: TableIcon, name: 'Tiket Saya', path: '/ticket-list' },
+      { icon: ListIcon, name: 'Buat Tiket Baru', path: '/create-tickets' },
       { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },
@@ -219,8 +242,9 @@ const petugasMenu = [
   {
     title: 'MENU',
     items: [
-      { icon: GridIcon, name: 'Dashboard Tugas', path: '/petugas/dashboard' },
-      { icon: TableIcon, name: 'Riwayat Tiket Saya', path: '/petugas/my-tickets' },
+      { icon: GridIcon, name: 'Dashboard Tugas', path: '/petugas' },
+      { icon: TableIcon, name: 'Riwayat Tiket Saya', path: '/petugas/tickets' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
       { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },
@@ -228,25 +252,23 @@ const petugasMenu = [
 
 const adminMenu = [
   {
-    title: 'MENU',
-    items: [
-      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/' },
-      { icon: TableIcon, name: 'Manajemen Tiket', path: '/admin/manage-tickets' },
-    ],
+    title: 'Dashboard',
+    items: [{ icon: PieChartIcon, name: 'Dashboard Analitik', path: '/' }],
   },
   {
     title: 'MANAJEMEN',
     items: [
-      { icon: UserCircleIcon, name: 'Manajemen Pengguna', path: '/admin/manage-users' },
-      { icon: ListIcon, name: 'Manajemen Layanan', path: '/admin/manage-services' },
-      { icon: PageIcon, name: 'Laporan Feedback', path: '/admin/feedbacks' },
+      { icon: UserCircleIcon, name: 'Manajemen Pengguna', path: '/manage-users' },
+      { icon: TableIcon, name: 'Manajemen Tiket', path: '/manage-tickets' },
+      { icon: ListIcon, name: 'Manajemen Layanan', path: '/manage-services' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
       {
         icon: GridIcon,
         name: 'Pengaturan Master',
         subItems: [
-          { name: 'Kelola SLA', path: '/admin/manage-sla' },
-          { name: 'Kelola Skills', path: '/admin/manage-skills' },
-          { name: 'Kelola Roles', path: '/admin/manage-roles' },
+          { name: 'Kelola SLA', path: '/manage-sla' },
+          { name: 'Kelola Skills', path: '/manage-skills' },
+          { name: 'Kelola Roles', path: '/manage-roles' },
         ],
       },
     ],
@@ -261,9 +283,9 @@ const pimpinanMenu = [
   {
     title: 'MENU',
     items: [
-      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/admin/dashboard' },
-      { icon: TableIcon, name: 'Daftar Tiket', path: '/admin/manage-tickets' },
-      { icon: PageIcon, name: 'Laporan Feedback', path: '/admin/feedbacks' },
+      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/' },
+      { icon: TableIcon, name: 'Daftar Tiket', path: '/manage-tickets' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
       { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },

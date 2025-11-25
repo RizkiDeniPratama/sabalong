@@ -8,7 +8,14 @@ function addHoursToDate(date, hours) {
 
 export async function createTicket(req, res) {
   try {
-    const { service_id, judul_permohonan, deskripsi, attachment } = req.body;
+    let attachmentPath = null;
+
+    if (req.file) {
+      attachmentPath = "/uploads/" + req.file.filename;
+    } else if (req.body.attachment) {
+      attachmentPath = req.body.attachment;
+    }
+    const { service_id, judul_permohonan, deskripsi } = req.body;
     const requesterId = req.user.id;
 
     if (!service_id || !judul_permohonan || !deskripsi) {
@@ -37,7 +44,6 @@ export async function createTicket(req, res) {
     );
     const ticket_number = `TKT-${Date.now()}`;
 
-    // Ambil semua ID Admin & Petugas untuk dikirimi notifikasi
     const staffToNotify = await prisma.user.findMany({
       where: {
         role: {
@@ -54,7 +60,7 @@ export async function createTicket(req, res) {
           ticket_number,
           judul_permohonan,
           deskripsi,
-          attachment,
+          attachment: attachmentPath,
           priority: service.default_priority,
           status: "pending",
           response_deadline,
@@ -74,7 +80,6 @@ export async function createTicket(req, res) {
         },
       });
 
-      // Buat Notifikasi untuk semua Admin & Petugas
       if (staffToNotify.length > 0) {
         const notifications = staffToNotify.map((staff) => ({
           user_id: staff.id,
@@ -113,7 +118,10 @@ export async function createTicket(req, res) {
 export async function getAllTickets(req, res) {
   try {
     const { id: userId, role: userRole } = req.user;
+    const { limit } = req.query;
+
     let whereClause = {};
+    const orderByClause = { created_at: "desc" };
 
     if (userRole === "user") {
       whereClause = { user_id: userId };
@@ -125,17 +133,30 @@ export async function getAllTickets(req, res) {
         ],
       };
     }
-    // Admin/Pimpinan: whereClause = {} (ambil semua)
 
-    const tickets = await prisma.ticket.findMany({
+    const options = {
       where: whereClause,
       include: {
-        requester: { select: { nama: true, instansi: true } },
-        assignee: { select: { nama: true } },
-        service: { select: { nama_layanan: true } },
+        requester: {
+          select: { nama: true, instansi: true },
+        },
+        assignee: {
+          select: { nama: true },
+        },
+        service: {
+          select: { nama_layanan: true },
+        },
       },
-      orderBy: { created_at: "desc" },
-    });
+      orderBy: orderByClause,
+    };
+
+    // ✅ Tambahkan limit jika dikirim (contoh ?limit=5)
+    if (limit) {
+      options.take = parseInt(limit);
+    }
+
+    // ✅ Gunakan options ini
+    const tickets = await prisma.ticket.findMany(options);
 
     res.json({ success: true, data: tickets });
   } catch (error) {

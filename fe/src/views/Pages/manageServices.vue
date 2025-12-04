@@ -43,26 +43,11 @@
             </div>
 
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <svg
-                  class="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
               <input
                 v-model="searchQuery"
                 type="text"
-                placeholder="Cari layanan atau kategori..."
-                class="pl-10 pr-4 py-2 w-full md:w-64 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
+                placeholder="Cari layanan..."
+                class="pl-4 pr-4 py-2 w-full md:w-64 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-brand-500"
               />
             </div>
           </div>
@@ -75,32 +60,32 @@
             >
               <tr>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
+                >
+                  Icon
+                </th>
+                <th
+                  class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
                 >
                   Nama Layanan
                 </th>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
                 >
                   Kategori
                 </th>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
                 >
                   SLA
                 </th>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
-                >
-                  Prioritas
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
                 >
                   Status
                 </th>
                 <th
-                  class="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
                 >
                   Aksi
                 </th>
@@ -112,37 +97,41 @@
                 :key="service.id"
                 class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
               >
-                <td class="px-4 py-4 text-sm font-medium text-gray-800 dark:text-white">
+                <td class="px-4 py-4">
+                  <div
+                    class="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-600"
+                  >
+                    <img
+                      v-if="service.icon"
+                      :src="getFileUrl(service.icon)"
+                      alt="Icon"
+                      class="h-full w-full object-cover"
+                    />
+                    <span v-else class="text-xs text-gray-400">No Icon</span>
+                  </div>
+                </td>
+                <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
                   {{ service.nama_layanan }}
                 </td>
                 <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
-                  <span
-                    class="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-xs border border-gray-200 dark:border-gray-600"
-                  >
-                    {{ service.kategori }}
-                  </span>
+                  {{ service.kategori }}
                 </td>
                 <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
-                  {{ service.sla ? service.sla.sla_name : '-' }}
-                </td>
-                <td class="px-4 py-4 text-sm">
-                  <span :class="getPriorityBadgeClass(service.default_priority)">
-                    {{ service.default_priority }}
-                  </span>
+                  {{ service.sla?.sla_name || '-' }}
                 </td>
                 <td class="px-4 py-4">
                   <span
                     :class="[
                       'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
                       service.is_active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
                     ]"
                   >
                     {{ service.is_active ? 'Aktif' : 'Non-Aktif' }}
                   </span>
                 </td>
-                <td class="px-4 py-4">
+                <td class="px-4 py-4 text-center">
                   <div class="flex items-center justify-center gap-2">
                     <button
                       @click="handleDetail(service)"
@@ -195,60 +184,31 @@
                   </div>
                 </td>
               </tr>
-              <tr v-if="paginatedServices.length === 0">
-                <td colspan="6" class="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
-                  <p class="text-sm font-medium">Tidak ada layanan ditemukan</p>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="text-sm text-gray-600 dark:text-gray-400">
-              Showing {{ startIndex + 1 }} to {{ Math.min(endIndex, filteredServices.length) }} of
-              {{ filteredServices.length }} entries
-            </div>
-            <div class="flex items-center gap-1">
-              <button
-                @click="previousPage"
-                :disabled="currentPage === 1"
-                :class="[
-                  'px-3 py-2 text-sm font-medium rounded-lg',
-                  currentPage === 1
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
-                ]"
-              >
-                Previous
-              </button>
-              <button
-                v-for="page in visiblePages"
-                :key="page"
-                @click="goToPage(page)"
-                :class="[
-                  'px-3 py-2 text-sm font-medium rounded-lg',
-                  currentPage === page
-                    ? 'bg-brand-500 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
-                ]"
-              >
-                {{ page }}
-              </button>
-              <button
-                @click="nextPage"
-                :disabled="currentPage === totalPages"
-                :class="[
-                  'px-3 py-2 text-sm font-medium rounded-lg',
-                  currentPage === totalPages
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700',
-                ]"
-              >
-                Next
-              </button>
-            </div>
+        <div
+          class="px-4 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center"
+        >
+          <span class="text-sm text-gray-500 dark:text-gray-400"
+            >Hal {{ currentPage }} dari {{ totalPages }}</span
+          >
+          <div class="flex gap-2">
+            <button
+              @click="previousPage"
+              :disabled="currentPage === 1"
+              class="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-300"
+            >
+              Prev
+            </button>
+            <button
+              @click="nextPage"
+              :disabled="currentPage === totalPages"
+              class="px-3 py-1 border rounded text-sm hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-300"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
@@ -258,12 +218,11 @@
       <Transition name="modal">
         <div
           v-if="showModal"
-          class="fixed inset-0 z-[999999] flex items-center justify-center p-4"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
           @click.self="closeModal"
         >
-          <div class="absolute inset-0 bg-gray-900/20 backdrop-blur-sm"></div>
           <div
-            class="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl"
+            class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl"
           >
             <div
               class="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
@@ -277,134 +236,292 @@
                       : 'Detail Layanan'
                 }}
               </h2>
-              <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+              <button
+                @click="closeModal"
+                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                ✕
               </button>
             </div>
 
-            <div class="p-6">
-              <div v-if="modalMode === 'detail' && selectedService" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Nama Layanan
-                    </h3>
-                    <p class="mt-1 text-lg font-semibold text-gray-800 dark:text-white">
-                      {{ selectedService.nama_layanan }}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Kategori</h3>
-                    <p class="mt-1 text-gray-800 dark:text-white">{{ selectedService.kategori }}</p>
-                  </div>
-                  <div class="col-span-1 md:col-span-2">
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Deskripsi</h3>
-                    <p class="mt-1 text-gray-800 dark:text-white whitespace-pre-line">
-                      {{ selectedService.deskripsi }}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      SLA (Service Level Agreement)
-                    </h3>
+            <div class="p-6 space-y-6">
+              <div v-if="modalMode === 'detail' && selectedService" class="space-y-8">
+                <div class="flex flex-col md:flex-row gap-6">
+                  <div class="flex-shrink-0">
                     <div
-                      class="mt-1 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/50"
+                      class="w-24 h-24 rounded-2xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center overflow-hidden"
                     >
-                      <p class="font-medium text-blue-800 dark:text-blue-300">
-                        {{ selectedService.sla?.sla_name }}
-                      </p>
-                      <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        Response: {{ selectedService.sla?.response_hours }} jam | Resolution:
-                        {{ selectedService.sla?.resolution_hours }} jam
-                      </p>
+                      <img
+                        v-if="selectedService.icon"
+                        :src="getFileUrl(selectedService.icon)"
+                        alt="Icon"
+                        class="h-full w-full object-cover"
+                      />
+                      <div v-else class="text-center p-2">
+                        <svg
+                          class="w-8 h-8 text-gray-300 mx-auto"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span class="text-[10px] text-gray-400">No Icon</span>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Prioritas Default
-                    </h3>
-                    <p class="mt-1 uppercase font-medium text-gray-800 dark:text-white">
-                      {{ selectedService.default_priority }}
+
+                  <div class="flex-1 space-y-3">
+                    <div>
+                      <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                        {{ selectedService.nama_layanan }}
+                      </h3>
+                      <span
+                        class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                      >
+                        {{ selectedService.kategori }}
+                      </span>
+                    </div>
+
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                      {{ selectedService.deskripsi || 'Tidak ada deskripsi.' }}
                     </p>
+
+                    <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                      <div class="flex items-center gap-1">
+                        <span class="font-semibold text-gray-700 dark:text-gray-200"
+                          >Prioritas:</span
+                        >
+                        <span class="uppercase">{{ selectedService.default_priority }}</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <span class="font-semibold text-gray-700 dark:text-gray-200">Status:</span>
+                        <span
+                          :class="selectedService.is_active ? 'text-green-600' : 'text-red-600'"
+                          >{{ selectedService.is_active ? 'Aktif' : 'Non-Aktif' }}</span
+                        >
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div v-if="selectedService.skills && selectedService.skills.length > 0">
-                  <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-                    Skill yang Dibutuhkan
-                  </h3>
-                  <div class="flex flex-wrap gap-2">
-                    <span
-                      v-for="s in selectedService.skills"
-                      :key="s.id"
-                      class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm border border-gray-200 dark:border-gray-600"
+                <hr class="border-gray-100 dark:border-gray-700" />
+
+                <div>
+                  <h4
+                    class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-4"
+                  >
+                    Dokumen & Alur
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                      class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/20"
                     >
-                      {{ s.skill.skill_name }}
-                    </span>
+                      <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold text-gray-500 uppercase"
+                          >Flowchart Alur</span
+                        >
+                        <a
+                          v-if="selectedService.flowchart"
+                          :href="getFileUrl(selectedService.flowchart)"
+                          target="_blank"
+                          class="text-xs text-blue-600 hover:underline"
+                          >Lihat Full</a
+                        >
+                      </div>
+                      <div
+                        v-if="selectedService.flowchart"
+                        class="h-32 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center cursor-pointer group"
+                      >
+                        <img
+                          :src="getFileUrl(selectedService.flowchart)"
+                          class="h-full w-full object-contain group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div
+                        v-else
+                        class="h-32 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded border border-dashed border-gray-300 dark:border-gray-600 text-gray-400 text-xs"
+                      >
+                        Belum ada gambar alur
+                      </div>
+                    </div>
+
+                    <div
+                      class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/20"
+                    >
+                      <span class="text-xs font-semibold text-gray-500 uppercase block mb-2"
+                        >Standar Operasional (SOP)</span
+                      >
+
+                      <div
+                        v-if="selectedService.sop && selectedService.sop.startsWith('/uploads')"
+                        class="flex flex-col items-center justify-center h-32 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600"
+                      >
+                        <svg
+                          class="w-10 h-10 text-red-500 mb-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span class="text-xs text-gray-600 dark:text-gray-300 mb-2 font-medium"
+                          >Dokumen SOP Tersedia</span
+                        >
+                        <a
+                          :href="getFileUrl(selectedService.sop)"
+                          target="_blank"
+                          class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition shadow-sm"
+                          >Download PDF</a
+                        >
+                      </div>
+
+                      <div
+                        v-else-if="selectedService.sop"
+                        class="h-32 overflow-y-auto bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line"
+                      >
+                        {{ selectedService.sop }}
+                      </div>
+
+                      <div
+                        v-else
+                        class="h-32 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded border border-dashed border-gray-300 dark:border-gray-600 text-gray-400 text-xs"
+                      >
+                        Belum ada SOP
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <hr class="border-gray-100 dark:border-gray-700" />
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div>
+                    <h4
+                      class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-3"
+                    >
+                      Target SLA
+                    </h4>
+                    <div
+                      class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 rounded-xl"
+                    >
+                      <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-blue-600 dark:text-blue-300"
+                          >Paket SLA</span
+                        >
+                        <span class="text-sm font-bold text-gray-900 dark:text-white">{{
+                          selectedService.sla?.sla_name || 'Default'
+                        }}</span>
+                      </div>
+                      <div class="flex gap-4 text-sm">
+                        <div
+                          class="flex-1 bg-white dark:bg-gray-800 p-2 rounded border border-blue-100 dark:border-blue-800 text-center"
+                        >
+                          <span class="block text-xs text-gray-500">Respon</span>
+                          <span class="font-bold text-gray-800 dark:text-white"
+                            >{{ selectedService.sla?.response_hours || 0 }} Jam</span
+                          >
+                        </div>
+                        <div
+                          class="flex-1 bg-white dark:bg-gray-800 p-2 rounded border border-blue-100 dark:border-blue-800 text-center"
+                        >
+                          <span class="block text-xs text-gray-500">Penyelesaian</span>
+                          <span class="font-bold text-gray-800 dark:text-white"
+                            >{{ selectedService.sla?.resolution_hours || 0 }} Jam</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4
+                      class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-3"
+                    >
+                      Keahlian Dibutuhkan
+                    </h4>
+                    <div
+                      v-if="selectedService.skills && selectedService.skills.length > 0"
+                      class="flex flex-wrap gap-2"
+                    >
+                      <span
+                        v-for="s in selectedService.skills"
+                        :key="s.id"
+                        class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-600"
+                      >
+                        {{ s.skill.skill_name }}
+                      </span>
+                    </div>
+                    <p v-else class="text-sm text-gray-500 italic">Tidak ada skill khusus.</p>
                   </div>
                 </div>
               </div>
-
-              <form v-else @submit.prevent="saveChanges" class="space-y-5">
-                <div v-if="error.form" class="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+              <form v-else @submit.prevent="saveChanges" class="space-y-6">
+                <div
+                  v-if="error.form"
+                  class="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 text-sm dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                >
                   {{ error.form }}
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                       >Nama Layanan <span class="text-red-500">*</span></label
                     >
                     <input
                       v-model="formData.nama_layanan"
                       type="text"
                       required
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       placeholder="Contoh: Perbaikan Jaringan"
                     />
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                       >Kategori <span class="text-red-500">*</span></label
                     >
                     <input
                       v-model="formData.kategori"
                       type="text"
                       required
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       placeholder="Contoh: Infrastructure"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                     >Deskripsi</label
                   >
                   <textarea
                     v-model="formData.deskripsi"
                     rows="3"
-                    class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 resize-none"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white resize-none"
                     placeholder="Jelaskan detail layanan ini..."
                   ></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >SLA <span class="text-red-500">*</span></label
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                      >SLA (Standar Layanan) <span class="text-red-500">*</span></label
                     >
                     <select
                       v-model="formData.sla_id"
                       required
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
                       <option disabled value="">Pilih SLA</option>
                       <option v-for="sla in availableSLAs" :key="sla.id" :value="sla.id">
@@ -413,12 +530,12 @@
                     </select>
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >Default Priority</label
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                      >Prioritas Default</label
                     >
                     <select
                       v-model="formData.default_priority"
-                      class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -429,76 +546,151 @@
                 </div>
 
                 <div
-                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                  class="p-4 bg-gray-50 rounded-xl border border-gray-200 dark:bg-gray-700/30 dark:border-gray-700"
                 >
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >Status Aktif</label
-                    >
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Layanan ini dapat dipilih oleh user
-                    </p>
+                  <h3
+                    class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 uppercase tracking-wide"
+                  >
+                    File Pendukung
+                  </h3>
+
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label class="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400"
+                        >Icon Layanan (Image)</label
+                      >
+                      <input
+                        type="file"
+                        @change="handleFileUpload($event, 'icon')"
+                        accept="image/*"
+                        class="block w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-brand-50 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-gray-600 dark:file:text-gray-300"
+                      />
+                      <p
+                        v-if="selectedService?.icon"
+                        class="text-[10px] text-blue-500 mt-1 truncate"
+                      >
+                        File saat ini: {{ getFileName(selectedService.icon) }}
+                      </p>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400"
+                        >Flowchart Alur (Image)</label
+                      >
+                      <input
+                        type="file"
+                        @change="handleFileUpload($event, 'flowchart')"
+                        accept="image/*"
+                        class="block w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-brand-50 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-gray-600 dark:file:text-gray-300"
+                      />
+                      <p
+                        v-if="selectedService?.flowchart"
+                        class="text-[10px] text-blue-500 mt-1 truncate"
+                      >
+                        File saat ini: {{ getFileName(selectedService.flowchart) }}
+                      </p>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400"
+                        >Dokumen SOP (PDF)</label
+                      >
+                      <input
+                        type="file"
+                        @change="handleFileUpload($event, 'sop_file')"
+                        accept=".pdf"
+                        class="block w-full cursor-pointer text-sm text-gray-500 file:mr-4 file:px-4 file:py-2 file:rounded-full file:border-0 file:bg-brand-50 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-gray-600 dark:file:text-gray-300"
+                      />
+                      <p
+                        v-if="selectedService?.sop && selectedService.sop.startsWith('/uploads')"
+                        class="text-[10px] text-blue-500 mt-1 truncate"
+                      >
+                        File saat ini: {{ getFileName(selectedService.sop) }}
+                      </p>
+                    </div>
                   </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input v-model="formData.is_active" type="checkbox" class="sr-only peer" />
-                    <div
-                      class="w-11 h-6 bg-gray-300 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"
-                    ></div>
-                  </label>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
-                    >Keahlian yang Dibutuhkan (Required Skills)</label
+                  <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                    >SOP (Teks Manual)</label
                   >
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div
+                  <textarea
+                    v-model="formData.sop"
+                    rows="3"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white resize-none"
+                    placeholder="Atau tulis langkah-langkah SOP di sini jika tidak upload file PDF..."
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300"
+                    >Skill yang Dibutuhkan <span class="text-red-500">*</span></label
+                  >
+                  <div
+                    class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto p-3 border rounded-lg bg-gray-50 dark:bg-gray-700/30 dark:border-gray-700"
+                  >
+                    <label
                       v-for="skill in availableSkills"
                       :key="skill.id"
-                      class="flex items-start gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                      @click="toggleSkill(skill.id)"
+                      class="flex items-center gap-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded"
                     >
                       <input
                         type="checkbox"
-                        :checked="formData.skill_ids.includes(skill.id)"
-                        class="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        :value="skill.id"
+                        v-model="formData.skill_ids"
+                        class="rounded border-gray-300 text-brand-600 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
                       />
-                      <div>
-                        <span class="block text-sm font-medium text-gray-800 dark:text-white">{{
-                          skill.skill_name
-                        }}</span>
-                        <span class="text-xs text-gray-500">{{ skill.kategori }}</span>
-                      </div>
-                    </div>
+                      <span class="text-sm text-gray-700 dark:text-gray-300">{{
+                        skill.skill_name
+                      }}</span>
+                    </label>
                   </div>
+                </div>
+
+                <div
+                  class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-700"
+                >
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="formData.is_active" class="sr-only peer" />
+                    <div
+                      class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-500"
+                    ></div>
+                    <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300"
+                      >Status Layanan Aktif</span
+                    >
+                  </label>
+                </div>
+
+                <div
+                  class="flex justify-end gap-3 pt-6 border-t border-gray-100 dark:border-gray-700"
+                >
+                  <button
+                    type="button"
+                    @click="closeModal"
+                    class="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    :disabled="loading.submit"
+                    class="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
+                  >
+                    {{ loading.submit ? 'Menyimpan...' : 'Simpan' }}
+                  </button>
                 </div>
               </form>
             </div>
 
             <div
+              v-if="modalMode === 'detail'"
               class="sticky bottom-0 flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
             >
               <button
                 @click="closeModal"
                 type="button"
-                class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                class="px-6 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg"
               >
-                {{ modalMode === 'detail' ? 'Tutup' : 'Batal' }}
-              </button>
-              <button
-                v-if="modalMode !== 'detail'"
-                @click="saveChanges"
-                :disabled="loading.submit"
-                type="button"
-                class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm disabled:opacity-50"
-              >
-                {{
-                  loading.submit
-                    ? 'Menyimpan...'
-                    : modalMode === 'create'
-                      ? 'Tambah Layanan'
-                      : 'Simpan Perubahan'
-                }}
+                Tutup
               </button>
             </div>
           </div>
@@ -509,189 +701,85 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, reactive } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import AdminLayout from '../../components/layout/AdminLayout.vue'
-import api from '../../services/api'
+import api from '@/services/api'
 
-// --- DATA TYPES ---
-interface SLA {
-  id: number
-  sla_name: string
-  response_hours: number
-  resolution_hours: number
-  description: string
-}
-
-interface Skill {
-  id: number
-  skill_name: string
-  skill_description: string
-  kategori: string
-}
-
-interface ServiceSkill {
-  id: number
-  service_id: number
-  skill_id: number
-  skill: Skill
-}
-
+// --- Interfaces ---
 interface Service {
   id: number
   nama_layanan: string
   deskripsi: string
   kategori: string
   sla_id: number
-  default_priority: 'low' | 'medium' | 'high' | 'critical'
-  is_active: boolean
-  icon: string | null
-  sla?: SLA
-  skills?: ServiceSkill[]
-}
-
-interface FormData {
-  nama_layanan: string
-  deskripsi: string
-  kategori: string
-  sla_id: number | ''
   default_priority: string
   is_active: boolean
-  skill_ids: number[]
+  icon: string | null
+  flowchart: string | null
+  sop: string | null
+  sla?: any
+  skills?: any[]
 }
 
-// --- COMPONENT STATE ---
+// --- State ---
 const allServices = ref<Service[]>([])
-const availableSkills = ref<Skill[]>([])
-const availableSLAs = ref<SLA[]>([])
-
+const availableSkills = ref<any[]>([])
+const availableSLAs = ref<any[]>([])
 const searchQuery = ref('')
 const perPage = ref(10)
 const currentPage = ref(1)
 
-const loading = reactive({
-  services: true,
-  masters: true,
-  submit: false,
-})
-const error = reactive<{ services: string | null; masters: string | null; form: any | null }>({
-  services: null,
-  masters: null,
-  form: null,
-})
+const loading = reactive({ services: true, masters: true, submit: false })
+const error = reactive({ services: '', form: '' })
 
+// Modal State
 const showModal = ref(false)
 const modalMode = ref<'create' | 'edit' | 'detail'>('create')
 const selectedService = ref<Service | null>(null)
 
-// --- FORM ---
-const createDefaultFormData = (): FormData => ({
+// Form Data & Files
+const formData = reactive({
   nama_layanan: '',
   deskripsi: '',
   kategori: '',
-  sla_id: '',
+  sla_id: '' as string | number,
   default_priority: 'medium',
   is_active: true,
-  skill_ids: [],
-})
-const formData = ref<FormData>(createDefaultFormData())
-
-// --- COMPUTED PROPERTIES ---
-const filteredServices = computed(() => {
-  let services = allServices.value
-  if (!searchQuery.value) return services
-  const query = searchQuery.value.toLowerCase()
-  return services.filter(
-    (svc) =>
-      svc.nama_layanan.toLowerCase().includes(query) || svc.kategori.toLowerCase().includes(query),
-  )
+  sop: '',
+  skill_ids: [] as number[],
 })
 
-const totalPages = computed(() => Math.ceil(filteredServices.value.length / perPage.value))
-const startIndex = computed(() => (currentPage.value - 1) * perPage.value)
-const endIndex = computed(() => startIndex.value + perPage.value)
-const paginatedServices = computed(() =>
-  filteredServices.value.slice(startIndex.value, endIndex.value),
-)
-
-const visiblePages = computed(() => {
-  const pages: (number | string)[] = []
-  const maxVisible = 5
-  if (totalPages.value <= maxVisible) {
-    for (let i = 1; i <= totalPages.value; i++) pages.push(i)
-  } else {
-    pages.push(1)
-    if (currentPage.value > 3) pages.push('...')
-    let start = Math.max(2, currentPage.value - 1)
-    let end = Math.min(totalPages.value - 1, currentPage.value + 1)
-    for (let i = start; i <= end; i++) pages.push(i)
-    if (currentPage.value < totalPages.value - 2) pages.push('...')
-    pages.push(totalPages.value)
-  }
-  return pages
+const files = reactive({
+  icon: null as File | null,
+  flowchart: null as File | null,
+  sop_file: null as File | null,
 })
 
-const getPriorityBadgeClass = (priority: string) => {
-  const classes = 'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium capitalize '
-  switch (priority.toLowerCase()) {
-    case 'low':
-      return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-    case 'medium':
-      return classes + 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-    case 'high':
-      return classes + 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-    case 'critical':
-      return classes + 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-    default:
-      return classes + 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-  }
-}
-
-// --- API & DATA FETCHING ---
-const fetchServices = async () => {
+// --- API Actions ---
+const fetchData = async () => {
   loading.services = true
-  error.services = null
   try {
-    const response = await api.get('/services')
-    allServices.value = response.data.data
-  } catch (err) {
-    error.services = 'Gagal memuat data layanan.'
+    const [srv, skl, sla] = await Promise.all([
+      api.get('/services'),
+      api.get('/skills'),
+      api.get('/slas'),
+    ])
+    if (srv.data.success) allServices.value = srv.data.data
+    if (skl.data.success) availableSkills.value = skl.data.data
+    if (sla.data.success) availableSLAs.value = sla.data.data
+  } catch (e) {
+    error.services = 'Gagal memuat data'
   } finally {
     loading.services = false
   }
 }
 
-const fetchMasterData = async () => {
-  loading.masters = true
-  error.masters = null
-  try {
-    // Asumsi endpoint untuk SLA adalah /sla atau /slas
-    const [slaRes, skillsRes] = await Promise.all([api.get('/slas'), api.get('/skills')])
-    availableSLAs.value = slaRes.data.data
-    availableSkills.value = skillsRes.data.data
-  } catch (err) {
-    error.masters = 'Gagal memuat data SLA & skills.'
-    console.error(err)
-  } finally {
-    loading.masters = false
-  }
-}
-
-onMounted(() => {
-  fetchServices()
-  fetchMasterData()
-})
-
-// --- MODAL & FORM ACTIONS ---
+// --- Handlers ---
 const openModal = () => {
   modalMode.value = 'create'
-  formData.value = createDefaultFormData()
-  error.form = null
-  showModal.value = true
-}
-
-const closeModal = () => {
-  showModal.value = false
   selectedService.value = null
+  resetForm()
+  showModal.value = true
 }
 
 const handleDetail = (service: Service) => {
@@ -703,96 +791,142 @@ const handleDetail = (service: Service) => {
 const handleEdit = (service: Service) => {
   modalMode.value = 'edit'
   selectedService.value = service
-  error.form = null
-  formData.value = {
-    nama_layanan: service.nama_layanan,
-    deskripsi: service.deskripsi,
-    kategori: service.kategori,
-    sla_id: service.sla_id,
-    default_priority: service.default_priority,
-    is_active: service.is_active,
-    skill_ids: service.skills?.map((s) => s.skill_id) || [],
-  }
+
+  // Populate Form
+  formData.nama_layanan = service.nama_layanan
+  formData.deskripsi = service.deskripsi
+  formData.kategori = service.kategori
+  formData.sla_id = service.sla_id
+  formData.default_priority = service.default_priority
+  formData.is_active = service.is_active
+  // Cek apakah SOP itu text atau file path
+  formData.sop = service.sop && !service.sop.startsWith('/uploads') ? service.sop : ''
+  formData.skill_ids = service.skills?.map((s: any) => s.skill_id) || []
+
+  // Reset files
+  files.icon = null
+  files.flowchart = null
+  files.sop_file = null
+
   showModal.value = true
 }
 
-const toggleSkill = (skillId: number) => {
-  const index = formData.value.skill_ids.indexOf(skillId)
-  if (index > -1) {
-    formData.value.skill_ids.splice(index, 1)
-  } else {
-    formData.value.skill_ids.push(skillId)
+const handleFileUpload = (event: Event, type: 'icon' | 'flowchart' | 'sop_file') => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    files[type] = target.files[0]
   }
 }
 
-// --- CRUD ACTIONS ---
 const saveChanges = async () => {
   loading.submit = true
-  error.form = null
-
-  // Payload sesuai struktur backend
-  const payload = {
-    nama_layanan: formData.value.nama_layanan,
-    deskripsi: formData.value.deskripsi,
-    kategori: formData.value.kategori,
-    sla_id: formData.value.sla_id,
-    default_priority: formData.value.default_priority,
-    is_active: formData.value.is_active,
-    skill_ids: formData.value.skill_ids, // Array of numbers
-  }
+  error.form = ''
 
   try {
-    if (modalMode.value === 'create') {
-      const response = await api.post('/services', payload)
-      alert('Berhasil! Layanan baru telah ditambahkan.')
-      allServices.value.unshift(response.data.data)
-    } else if (modalMode.value === 'edit' && selectedService.value) {
-      const response = await api.put(`/services/${selectedService.value.id}`, payload)
-      alert('Berhasil! Data layanan telah diperbarui.')
-      // Update data di list local
-      const index = allServices.value.findIndex((s) => s.id === selectedService.value!.id)
-      if (index !== -1) {
-        // Merge response data dengan SLA object yang mungkin tidak dikembalikan lengkap oleh PUT
-        // Tips: Idealnya refresh list, tapi untuk cepat kita update manual jika strukturnya sama
-        allServices.value[index] = response.data.data
+    const fd = new FormData()
+    fd.append('nama_layanan', formData.nama_layanan)
+    fd.append('deskripsi', formData.deskripsi)
+    fd.append('kategori', formData.kategori)
+    fd.append('sla_id', String(formData.sla_id))
+    fd.append('default_priority', formData.default_priority)
+    fd.append('is_active', formData.is_active ? '1' : '0') // FIX
+    fd.append('sop', formData.sop)
+    fd.append('skill_ids', JSON.stringify(formData.skill_ids))
 
-        // Fetch ulang supaya relasi SLA tampil benar jika backend hanya return ID
-        fetchServices()
+    // Hanya append file baru
+    if (files.icon) fd.append('icon', files.icon)
+    if (files.flowchart) fd.append('flowchart', files.flowchart)
+    if (files.sop_file) fd.append('sop_file', files.sop_file)
+
+    let res
+    if (modalMode.value === 'create') {
+      res = await api.post('/services', fd)
+      allServices.value.unshift(res.data.data)
+      currentPage.value = 1
+      alert('Layanan berhasil dibuat!')
+    } else {
+      res = await api.put(`/services/${selectedService.value!.id}`, fd)
+      const idx = allServices.value.findIndex((s) => s.id === selectedService.value!.id)
+      if (idx !== -1) {
+        allServices.value[idx] = res.data.data
       }
+      alert('Layanan berhasil diupdate!')
     }
+
     closeModal()
   } catch (err: any) {
-    const message = err.response?.data?.message || 'Terjadi kesalahan pada server.'
-    error.form = message
-    console.error('Gagal menyimpan:', err)
+    console.error(err)
+    error.form = err.response?.data?.message || 'Gagal menyimpan layanan.'
   } finally {
     loading.submit = false
   }
 }
 
 const handleDelete = async (service: Service) => {
-  if (confirm(`Apakah Anda yakin ingin menghapus layanan "${service.nama_layanan}"?`)) {
-    try {
-      await api.delete(`/services/${service.id}`)
-      allServices.value = allServices.value.filter((s) => s.id !== service.id)
-    } catch (err: any) {
-      alert('Gagal menghapus: ' + (err.response?.data?.message || err.message))
-    }
+  if (!confirm(`Hapus layanan "${service.nama_layanan}"?`)) return
+  try {
+    await api.delete(`/services/${service.id}`)
+    allServices.value = allServices.value.filter((s) => s.id !== service.id)
+    currentPage.value = 1
+    alert('Layanan berhasil dihapus')
+  } catch (err: any) {
+    const msg = err.response?.data?.message
+    alert(msg || 'Gagal menghapus layanan')
   }
 }
 
-// --- PAGINATION HELPERS ---
-const previousPage = () => {
-  if (currentPage.value > 1) currentPage.value--
+// --- Utils ---
+const closeModal = () => {
+  showModal.value = false
+  resetForm()
 }
+const resetForm = () => {
+  Object.assign(formData, {
+    nama_layanan: '',
+    deskripsi: '',
+    kategori: '',
+    sla_id: '',
+    default_priority: 'medium',
+    is_active: true,
+    sop: '',
+    skill_ids: [],
+  })
+  Object.assign(files, { icon: null, flowchart: null, sop_file: null })
+}
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const getFileUrl = (path: string) => {
+  if (!path) return ''
+  if (path.startsWith('http')) return path
+  return `${API_BASE}${path}`
+}
+const getFileName = (path: string) => path.split('/').pop()
+
+// Pagination & Filter
+const filteredServices = computed(() => {
+  let services = allServices.value
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    services = services.filter(
+      (s) => s.nama_layanan.toLowerCase().includes(q) || s.kategori.toLowerCase().includes(q),
+    )
+  }
+  return services
+})
+
 const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++
 }
-const goToPage = (page: number | string) => {
-  if (typeof page === 'number') currentPage.value = page
+const previousPage = () => {
+  if (currentPage.value > 1) currentPage.value--
 }
+const totalPages = computed(() => Math.ceil(filteredServices.value.length / perPage.value) || 1)
+const paginatedServices = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  return filteredServices.value.slice(start, start + perPage.value)
+})
 
 watch([perPage, searchQuery], () => (currentPage.value = 1))
+onMounted(() => fetchData())
 </script>
 
 <style scoped>

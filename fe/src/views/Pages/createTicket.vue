@@ -219,23 +219,21 @@ const route = useRoute()
 
 const services = ref<any[]>([])
 const loading = ref(false)
-const attachmentMode = ref<'file' | 'link'>('file') // Default mode
+const attachmentMode = ref<'file' | 'link'>('file')
 const selectedFile = ref<File | null>(null)
 
 const form = reactive({
   service_id: '',
   judul_permohonan: '',
   deskripsi: '',
-  attachmentLink: '', // Untuk mode link
+  attachmentLink: '',
 })
 
-// Computed: Deskripsi Layanan
 const selectedServiceDesc = computed(() => {
   const s = services.value.find((svc: any) => svc.id === form.service_id)
   return s ? s.deskripsi : ''
 })
 
-// Handler: File Upload
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
@@ -243,14 +241,12 @@ const handleFileChange = (event: Event) => {
   }
 }
 
-// Fetch Services
 const fetchServices = async () => {
   try {
-    const res = await api.get('/services') //
+    const res = await api.get('/services')
     if (res.data.success) {
       services.value = res.data.data.filter((s: any) => s.is_active)
 
-      // Auto-select from query
       if (route.query.service_id) {
         const targetId = Number(route.query.service_id)
         if (services.value.some((s: any) => s.id === targetId)) {
@@ -313,38 +309,29 @@ const submitTicket = async () => {
 
   try {
     let payload: any
-    let config = {} // Ganti headers manual dengan config object kosong
+    let config = {}
 
-    // SKENARIO 1: Upload File (FormData)
     if (attachmentMode.value === 'file' && selectedFile.value) {
       const formData = new FormData()
-      // Pastikan nama field sesuai persis dengan backend (biasanya case-sensitive)
-      formData.append('service_id', String(form.service_id)) // Konversi ke string agar aman
+
+      formData.append('service_id', String(form.service_id))
       formData.append('judul_permohonan', form.judul_permohonan)
       formData.append('deskripsi', form.deskripsi)
       formData.append('attachment', selectedFile.value)
 
       payload = formData
-      // PENTING: JANGAN set header 'Content-Type': 'multipart/form-data' secara manual!
-      // Biarkan browser/axios yang mengaturnya otomatis agar "boundary" file terbaca.
-    }
-
-    // SKENARIO 2: Link / Tanpa Lampiran (JSON)
-    else {
+    } else {
       payload = {
         service_id: form.service_id,
         judul_permohonan: form.judul_permohonan,
         deskripsi: form.deskripsi,
-        // Kirim null jika attachmentLink kosong
         attachment:
           attachmentMode.value === 'link' && form.attachmentLink ? form.attachmentLink : null,
       }
-      // Tidak perlu config khusus, axios defaultnya sudah JSON
     }
 
-    console.log('Mengirim Payload:', payload) // Debugging: Cek data sebelum dikirim
+    console.log('Mengirim Payload:', payload)
 
-    // POST /tickets
     const res = await api.post('/tickets', payload, config)
 
     if (res.data.success) {
@@ -352,17 +339,15 @@ const submitTicket = async () => {
       router.push(`/user/tickets/${res.data.data.id}`)
     }
   } catch (err: any) {
-    // DEBUGGING LEBIH LENGKAP
     console.group('DEBUG ERROR TIKET')
     console.error('Error Object:', err)
     console.error('Response Server:', err.response)
     console.error('Data Response:', err.response?.data)
     console.groupEnd()
 
-    // Coba tangkap pesan error dari berbagai kemungkinan struktur response
     const serverMessage = err.response?.data?.message || err.response?.data?.error || err.message
+    console.log(serverMessage)
 
-    // Tampilkan pesan detail ke user agar tahu salahnya dimana
     alert(`Gagal membuat tiket: ${serverMessage}`)
   } finally {
     loading.value = false

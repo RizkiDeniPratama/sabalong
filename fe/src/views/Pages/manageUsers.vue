@@ -632,6 +632,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, reactive } from 'vue'
 import AdminLayout from '../../components/layout/AdminLayout.vue'
+import iziToast from 'izitoast'
+import 'izitoast/dist/css/iziToast.min.css'
 import api from '../../services/api'
 
 // --- DATA TYPES ---
@@ -871,23 +873,25 @@ const saveChanges = async () => {
     delete (payload as any).password
   }
 
-  // Jika BUKAN petugas, hapus data skill
   if (!isPetugasRole.value) {
     payload.skills = []
   }
 
   try {
     if (modalMode.value === 'create') {
-      // --- AKSI CREATE ---
       const response = await api.post('/users', payload)
-      console.log('ini payload = ', payload)
 
       alert('Berhasil! Pengguna baru telah ditambahkan.')
       allUsers.value.unshift(response.data.data)
     } else if (modalMode.value === 'edit' && selectedUser.value) {
       // --- AKSI UPDATE ---
       const response = await api.put(`/users/${selectedUser.value.id}`, payload)
-      alert('Berhasil! Data pengguna telah diperbarui.')
+      iziToast.show({
+        title: 'Yey!!',
+        message: 'Berhasil! Data pengguna telah diperbarui.',
+      })
+      // alert('Berhasil! Data pengguna telah diperbarui.')
+
       const index = allUsers.value.findIndex((u) => u.id === selectedUser.value!.id)
       if (index !== -1) {
         allUsers.value[index] = response.data.data

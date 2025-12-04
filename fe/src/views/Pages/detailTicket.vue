@@ -4,12 +4,10 @@
 
     <div class="min-h-screen space-y-6 p-4 xl:p-10">
       <div v-if="loading.ticket" class="flex items-center justify-center py-20">
-        <div class="text-center">
-          <div
-            class="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600"
-          ></div>
-          <p class="mt-4 text-sm text-gray-500">Memuat detail tiket...</p>
-        </div>
+        <div
+          class="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600"
+        ></div>
+        <p class="mt-4 text-sm text-gray-500">Memuat detail tiket...</p>
       </div>
 
       <div
@@ -42,20 +40,7 @@
             Kembali
           </button>
 
-          <div class="flex gap-2">
-            <button
-              v-if="canRate"
-              @click="showFeedbackModal = true"
-              class="flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-bold text-white hover:bg-yellow-600 shadow-md transition transform hover:-translate-y-0.5"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                />
-              </svg>
-              Beri Ulasan
-            </button>
-
+          <div class="flex gap-2" v-if="!isTicketClosed">
             <button
               v-if="canEscalate"
               @click="handleEscalate"
@@ -71,9 +56,8 @@
               </svg>
               Eskalasi
             </button>
-
             <button
-              v-if="isAdmin && !isTicketClosed"
+              v-if="isAdmin"
               @click="openAssignModal"
               class="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
             >
@@ -87,9 +71,8 @@
               </svg>
               {{ ticket.assignee ? 'Ganti Petugas' : 'Assign Petugas' }}
             </button>
-
             <button
-              v-if="canCompleteTicket && !isTicketClosed"
+              v-if="canCompleteTicket"
               @click="quickComplete"
               class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 shadow-sm transition"
             >
@@ -102,6 +85,20 @@
                 />
               </svg>
               Tandai Selesai
+            </button>
+          </div>
+
+          <div v-if="canRate">
+            <button
+              @click="showFeedbackModal = true"
+              class="flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-bold text-white hover:bg-yellow-600 shadow-md transition transform hover:-translate-y-0.5"
+            >
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                />
+              </svg>
+              Beri Ulasan
             </button>
           </div>
         </div>
@@ -131,6 +128,52 @@
               </div>
 
               <div class="p-6 space-y-6">
+                <div
+                  v-if="!isTicketClosed && ticket.resolution_deadline"
+                  class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+                >
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                      <div :class="['p-2 rounded-lg', slaStatus.bgColor, slaStatus.textColor]">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-500">
+                          Sisa Waktu Pengerjaan
+                        </p>
+                        <h4 class="text-xl font-bold" :class="slaStatus.textColor">
+                          {{ slaTimer }}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div class="flex-1 max-w-xs">
+                      <div class="flex justify-between text-xs mb-1">
+                        <span :class="slaStatus.textColor">{{ slaProgress }}%</span>
+                        <span class="text-gray-400"
+                          >Deadline: {{ formatDateShort(ticket.resolution_deadline) }}</span
+                        >
+                      </div>
+                      <div
+                        class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden"
+                      >
+                        <div
+                          class="h-2 rounded-full transition-all duration-500"
+                          :class="slaStatus.barColor"
+                          :style="{ width: slaProgress + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <h3
                     class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
@@ -155,7 +198,7 @@
                     target="_blank"
                     class="group flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white hover:border-brand-300 hover:shadow-sm transition dark:bg-gray-800 dark:border-gray-700 dark:hover:border-brand-600"
                   >
-                    <div class="p-2 bg-blue-50 text-blue-500 rounded-lg dark:bg-blue-900/20">
+                    <div class="p-2 bg-blue-50 text-blue-500 rounded-lg dark:bg-red-900/20">
                       <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path
                           stroke-linecap="round"
@@ -193,10 +236,12 @@
                 class="p-6 max-h-[500px] overflow-y-auto space-y-6 bg-white dark:bg-gray-900"
                 ref="logsContainer"
               >
-                <div v-if="!ticket.logs || ticket.logs.length === 0" class="text-center py-8">
-                  <p class="text-gray-500 dark:text-gray-400 text-sm">Belum ada percakapan.</p>
+                <div
+                  v-if="!ticket.logs || ticket.logs.length === 0"
+                  class="text-center py-8 text-gray-500 text-sm"
+                >
+                  Belum ada percakapan.
                 </div>
-
                 <div v-for="log in ticket.logs" :key="log.id">
                   <div
                     v-if="log.action_type !== 'commented'"
@@ -330,8 +375,8 @@
                 Ulasan Pengguna
               </h4>
               <div class="flex text-yellow-500 mb-2 text-lg">
-                <span v-for="n in 5" :key="n">
-                  <svg
+                <span v-for="n in 5" :key="n"
+                  ><svg
                     v-if="n <= ticket.feedback.rating"
                     class="w-5 h-5 fill-current"
                     viewBox="0 0 20 20"
@@ -340,82 +385,15 @@
                       d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
                     />
                   </svg>
-                  <svg
-                    v-else
-                    class="w-5 h-5 text-yellow-200 dark:text-yellow-900 fill-current"
-                    viewBox="0 0 20 20"
-                  >
+                  <svg v-else class="w-5 h-5 text-yellow-200 fill-current" viewBox="0 0 20 20">
                     <path
                       d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                    />
-                  </svg>
-                </span>
+                    /></svg
+                ></span>
               </div>
               <p class="text-sm text-yellow-800 dark:text-yellow-200 italic">
                 "{{ ticket.feedback.review }}"
               </p>
-            </div>
-
-            <div
-              class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900"
-            >
-              <h4
-                class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-100 dark:border-gray-700 pb-2"
-              >
-                Detail Layanan
-              </h4>
-              <div class="mb-4">
-                <span class="text-xs text-gray-500 dark:text-gray-400 block mb-1">Prioritas</span>
-                <span
-                  :class="[
-                    'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase shadow-sm',
-                    priorityBadgeClass(ticket.priority),
-                  ]"
-                >
-                  {{ ticket.priority || 'Normal' }}
-                </span>
-              </div>
-              <div
-                v-if="ticket.resolution_deadline"
-                class="rounded-xl bg-blue-50/50 p-3 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/30"
-              >
-                <span class="text-xs font-semibold text-blue-700 dark:text-blue-300 block mb-2"
-                  >Target Penyelesaian</span
-                >
-                <div class="flex items-center gap-2">
-                  <svg
-                    class="w-4 h-4 text-blue-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <div>
-                    <p
-                      :class="[
-                        'text-sm font-bold',
-                        isMissed(ticket.resolution_deadline)
-                          ? 'text-red-600'
-                          : 'text-gray-800 dark:text-white',
-                      ]"
-                    >
-                      {{ formatDateShort(ticket.resolution_deadline) }}
-                    </p>
-                    <p
-                      v-if="isMissed(ticket.resolution_deadline)"
-                      class="text-[10px] text-red-500 font-medium mt-0.5"
-                    >
-                      ⚠️ SLA Terlampaui
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div
@@ -433,15 +411,10 @@
                   {{ ticket.requester?.nama?.charAt(0) }}
                 </div>
                 <div class="overflow-hidden">
-                  <p
-                    class="font-bold text-sm text-gray-900 dark:text-white truncate"
-                    :title="ticket.requester?.nama"
-                  >
+                  <p class="font-bold text-sm text-gray-900 dark:text-white truncate">
                     {{ ticket.requester?.nama }}
                   </p>
-                  <p class="text-xs text-gray-500 truncate" :title="ticket.requester?.email">
-                    {{ ticket.requester?.email }}
-                  </p>
+                  <p class="text-xs text-gray-500 truncate">{{ ticket.requester?.email }}</p>
                 </div>
               </div>
               <div
@@ -504,9 +477,7 @@
               class="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
             >
               <div class="border-b border-gray-200 p-4 dark:border-gray-800">
-                <h3 class="font-bold text-sm text-gray-900 dark:text-white">
-                  Update Status Manual
-                </h3>
+                <h3 class="font-bold text-sm text-gray-900 dark:text-white">Update Status</h3>
               </div>
               <div class="p-4 space-y-3">
                 <select
@@ -519,12 +490,6 @@
                   <option value="selesai">Selesai</option>
                   <option value="closed" v-if="isAdmin">Closed (Arsip)</option>
                 </select>
-                <textarea
-                  v-model="statusNotes"
-                  rows="2"
-                  placeholder="Catatan (Opsional)..."
-                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white resize-none"
-                ></textarea>
                 <button
                   @click="submitStatusUpdate"
                   :disabled="!newStatus || loading.status"
@@ -654,7 +619,7 @@
               <button
                 @click="submitFeedback"
                 :disabled="!feedbackForm.rating || loading.feedback"
-                class="flex-1 py-2.5 text-sm font-bold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-yellow-500/30"
+                class="flex-1 py-2.5 text-sm font-bold text-white bg-yellow-500 rounded-xl hover:bg-yellow-600 disabled:opacity-50 shadow-lg"
               >
                 {{ loading.feedback ? 'Mengirim...' : 'Kirim Ulasan' }}
               </button>
@@ -667,12 +632,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, nextTick } from 'vue'
+import { ref, computed, reactive, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AdminLayout from '../../components/layout/AdminLayout.vue'
 import PageBreadcrumb from '../../components/common/PageBreadcrumb.vue'
 import api from '@/services/api'
 
+// Interfaces
 interface User {
   id: number
   nama: string
@@ -686,14 +652,6 @@ interface TicketLog {
   notes?: string
   created_at: string
   user?: User
-  old_value?: string
-  new_value?: string
-}
-interface Feedback {
-  id: number
-  rating: number
-  review: string
-  created_at: string
 }
 interface Ticket {
   id: number
@@ -706,15 +664,16 @@ interface Ticket {
   created_at: string
   response_deadline: string
   resolution_deadline: string
-  user_id: number
   assigned_to_id: number
+  user_id: number
   requester: User
   assignee?: User
   service: { nama_layanan: string }
   logs: TicketLog[]
-  feedback?: Feedback
+  feedback?: { rating: number; review: string }
 }
 
+// State
 const route = useRoute()
 const router = useRouter()
 const currentPageTitle = ref('Detail Tiket')
@@ -738,50 +697,65 @@ const loading = reactive({
   feedback: false,
 })
 
+// SLA TIMER STATE
+const slaTimer = ref('Loading...')
+const slaProgress = ref(0)
+let timerInterval: any = null
+
+// Auth
 const authUser = ref<any>(null)
 
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
-  if (storedUser) {
+  if (storedUser)
     try {
       authUser.value = JSON.parse(storedUser)
-    } catch (e) {
-      console.error(e)
-    }
-  }
+    } catch (e) {}
   fetchTicketDetail()
 })
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
+})
 
+// Roles
 const isAdmin = computed(() => authUser.value?.role === 'admin')
 const isPetugas = computed(() => authUser.value?.role === 'petugas')
 const isUser = computed(() => authUser.value?.role === 'user')
-
-const isTicketOwner = computed(() => {
-  if (!ticket.value || !authUser.value) return false
-  return ticket.value.assigned_to_id === authUser.value.id
-})
+const isTicketOwner = computed(() => ticket.value?.assigned_to_id === authUser.value?.id)
 
 const isTicketClosed = computed(() =>
   ['selesai', 'closed'].includes(ticket.value?.status?.toLowerCase() || ''),
 )
 const isMe = (uid?: number) => uid === authUser.value?.id
-const canRate = computed(
-  () => isUser.value && ticket.value?.status === 'selesai' && !ticket.value?.feedback,
+
+const canComment = computed(
+  () =>
+    !isTicketClosed.value &&
+    (isAdmin.value || isTicketOwner.value || ticket.value?.user_id === authUser.value?.id),
 )
-
-const canComment = computed(() => {
-  if (isTicketClosed.value) return false
-  if (isAdmin.value) return true
-  if (ticket.value?.user_id === authUser.value?.id) return true
-  if (isTicketOwner.value) return true
-  return false
-})
-
 const canCompleteTicket = computed(() => isAdmin.value || isTicketOwner.value)
 const canEscalate = computed(
   () => isPetugas.value && isTicketOwner.value && ticket.value?.status === 'on_progress',
 )
+const canRate = computed(
+  () => isUser.value && ticket.value?.status === 'selesai' && !ticket.value?.feedback,
+)
 
+// SLA Status Logic
+const slaStatus = computed(() => {
+  if (!ticket.value?.resolution_deadline)
+    return { bgColor: 'bg-gray-100', textColor: 'text-gray-500', barColor: 'bg-gray-500' }
+  const deadline = new Date(ticket.value.resolution_deadline).getTime()
+  const now = new Date().getTime()
+  const diff = deadline - now
+
+  if (diff < 0) return { bgColor: 'bg-red-100', textColor: 'text-red-600', barColor: 'bg-red-600' } // Breached
+  if (diff < 3600 * 4000)
+    return { bgColor: 'bg-yellow-100', textColor: 'text-yellow-600', barColor: 'bg-yellow-500' } // < 4 Jam (Warning)
+  return { bgColor: 'bg-green-100', textColor: 'text-green-600', barColor: 'bg-green-500' } // Safe
+})
+
+// --- ACTIONS ---
 const goBack = () => {
   if (isUser.value) router.push('/user/dashboard')
   else if (isPetugas.value) router.push('/petugas/dashboard')
@@ -796,6 +770,7 @@ const fetchTicketDetail = async () => {
     if (res.data.success) {
       ticket.value = res.data.data
       scrollToBottom()
+      startSLACountdown()
     }
   } catch (err: any) {
     error.value = 'Gagal memuat tiket.'
@@ -804,11 +779,44 @@ const fetchTicketDetail = async () => {
   }
 }
 
+// Countdown Timer Logic
+const startSLACountdown = () => {
+  if (timerInterval) clearInterval(timerInterval)
+  const updateTimer = () => {
+    if (!ticket.value?.resolution_deadline || isTicketClosed.value) {
+      slaTimer.value = isTicketClosed.value ? 'Selesai' : '-'
+      slaProgress.value = 100
+      return
+    }
+    const now = new Date().getTime()
+    const deadline = new Date(ticket.value.resolution_deadline).getTime()
+    // Start time asumsi dari created_at atau assign date (first_response_at) untuk progress bar
+    const startTime = new Date(ticket.value.first_response_at || ticket.value.created_at).getTime()
+    const totalDuration = deadline - startTime
+    const timeLeft = deadline - now
+
+    if (timeLeft <= 0) {
+      slaTimer.value = 'Terlambat'
+      slaProgress.value = 100
+    } else {
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60))
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+      slaTimer.value = `${hours}j ${minutes}m`
+      // Hitung persentase sisa waktu
+      const elapsed = now - startTime
+      const percent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
+      slaProgress.value = percent
+    }
+  }
+  updateTimer()
+  timerInterval = setInterval(updateTimer, 60000) // Update tiap menit
+}
+
 const submitComment = async () => {
-  if (!newComment.value.trim() || !ticket.value) return
+  if (!newComment.value.trim()) return
   loading.comment = true
   try {
-    await api.post(`/tickets/${ticket.value.id}/logs`, { notes: newComment.value })
+    await api.post(`/tickets/${ticket.value!.id}/logs`, { notes: newComment.value })
     await fetchTicketDetail()
     newComment.value = ''
   } catch {
@@ -819,16 +827,12 @@ const submitComment = async () => {
 }
 
 const submitStatusUpdate = async () => {
-  if (!newStatus.value || !ticket.value) return
+  if (!newStatus.value) return
   loading.status = true
   try {
-    await api.put(`/tickets/${ticket.value.id}/status`, {
-      status: newStatus.value,
-      notes: statusNotes.value,
-    })
+    await api.put(`/tickets/${ticket.value!.id}/status`, { status: newStatus.value })
     await fetchTicketDetail()
     newStatus.value = ''
-    statusNotes.value = ''
     alert('Status diperbarui!')
   } catch {
     alert('Gagal update status')
@@ -846,9 +850,9 @@ const quickComplete = async () => {
 
 const handleEscalate = async () => {
   const reason = prompt('Alasan eskalasi:')
-  if (!reason || !ticket.value) return
+  if (!reason) return
   try {
-    await api.put(`/tickets/${ticket.value.id}/escalate`, { eskalasi_reason: reason })
+    await api.put(`/tickets/${ticket.value!.id}/escalate`, { eskalasi_reason: reason })
     alert('Tiket berhasil dieskalasi.')
     fetchTicketDetail()
   } catch (e) {
@@ -857,11 +861,10 @@ const handleEscalate = async () => {
 }
 
 const submitFeedback = async () => {
-  if (!feedbackForm.rating || !ticket.value) return
   loading.feedback = true
   try {
     await api.post('/feedbacks', {
-      ticket_id: ticket.value.id,
+      ticket_id: ticket.value!.id,
       rating: feedbackForm.rating,
       review: feedbackForm.review,
     })

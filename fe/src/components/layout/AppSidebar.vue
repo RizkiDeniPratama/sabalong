@@ -259,7 +259,7 @@ const adminMenu = [
     title: 'MANAJEMEN',
     items: [
       { icon: UserCircleIcon, name: 'Manajemen Pengguna', path: '/manage-users' },
-      { icon: TableIcon, name: 'Manajemen Tiket', path: '/manage-tickets' },
+      { icon: TableIcon, name: 'Manajemen Tiket', path: '/user/tickets' },
       { icon: ListIcon, name: 'Manajemen Layanan', path: '/manage-services' },
       { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
       {

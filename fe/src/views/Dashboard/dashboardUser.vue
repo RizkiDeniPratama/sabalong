@@ -286,8 +286,7 @@ const filteredServices = computed(() => {
 })
 
 const goToCreateTicket = (serviceId: number) => {
-  // Redirect ke halaman create dengan membawa ID Service
-  router.push({ path: '/create-tickets', query: { service_id: serviceId } })
+  router.push({ path: '/user/tickets/create', query: { service_id: serviceId } })
 }
 
 // Utils

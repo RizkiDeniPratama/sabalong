@@ -210,6 +210,7 @@ import {
   TableIcon,
   PageIcon,
   PieChartIcon,
+  BarChartIcon,
   ChevronDownIcon,
   HorizontalDots,
 } from '../../icons' // <-- Cek path ini, mungkin perlu disesuaikan
@@ -230,9 +231,9 @@ const userMenu = [
   {
     title: 'MENU',
     items: [
-      { icon: GridIcon, name: 'Dashboard Saya', path: '/user' },
-      { icon: TableIcon, name: 'Tiket Saya', path: '/ticket-list' },
-      { icon: ListIcon, name: 'Buat Tiket Baru', path: '/create-tickets' },
+      { icon: GridIcon, name: 'Dashboard Saya', path: '/user/dashboard' },
+      { icon: TableIcon, name: 'Tiket Saya', path: '/user/tickets' },
+      { icon: ListIcon, name: 'Buat Tiket Baru', path: '/user/tickets/create' },
       { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },
@@ -242,9 +243,9 @@ const petugasMenu = [
   {
     title: 'MENU',
     items: [
-      { icon: GridIcon, name: 'Dashboard Tugas', path: '/petugas' },
+      { icon: GridIcon, name: 'Dashboard Tugas', path: '/petugas/dashboard' },
       { icon: TableIcon, name: 'Riwayat Tiket Saya', path: '/petugas/tickets' },
-      { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/petugas/feedbacks' },
       { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },
@@ -253,15 +254,16 @@ const petugasMenu = [
 const adminMenu = [
   {
     title: 'Dashboard',
-    items: [{ icon: PieChartIcon, name: 'Dashboard Analitik', path: '/' }],
+    items: [{ icon: PieChartIcon, name: 'Dashboard Analitik', path: '/admin/dashboard' }],
   },
   {
     title: 'MANAJEMEN',
     items: [
       { icon: UserCircleIcon, name: 'Manajemen Pengguna', path: '/manage-users' },
-      { icon: TableIcon, name: 'Manajemen Tiket', path: '/user/tickets' },
+      { icon: TableIcon, name: 'Manajemen Tiket', path: '/admin/tickets' },
       { icon: ListIcon, name: 'Manajemen Layanan', path: '/manage-services' },
-      { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/admin/feedbacks' },
+      { icon: BarChartIcon, name: 'SLA Ranking', path: '/admin/sla-ranking' },
       {
         icon: GridIcon,
         name: 'Pengaturan Master',
@@ -283,9 +285,10 @@ const pimpinanMenu = [
   {
     title: 'MENU',
     items: [
-      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/' },
-      { icon: TableIcon, name: 'Daftar Tiket', path: '/manage-tickets' },
-      { icon: PageIcon, name: 'Laporan Feedback', path: '/feedbacks' },
+      { icon: PieChartIcon, name: 'Dashboard Analitik', path: '/admin/dashboard' },
+      { icon: TableIcon, name: 'Daftar Tiket', path: '/admin/tickets' },
+      { icon: PageIcon, name: 'Laporan Feedback', path: '/admin/feedbacks' },
+      { icon: BarChartIcon, name: 'SLA Ranking', path: '/admin/sla-ranking' },
       { icon: UserCircleIcon, name: 'Profil Saya', path: '/profile' },
     ],
   },

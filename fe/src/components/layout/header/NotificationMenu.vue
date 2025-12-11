@@ -161,7 +161,7 @@ const handleItemClick = async (notif: Notification) => {
   closeDropdown()
 
   if (notif.ticket_id) {
-    router.push(`/detail-ticket/${notif.ticket_id}`)
+    router.push({ name: 'TicketDetail', params: { id: notif.ticket_id } })
   }
 }
 

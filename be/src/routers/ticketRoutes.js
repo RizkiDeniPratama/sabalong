@@ -28,6 +28,11 @@ router.put(
   ticketController.updateTicketStatus
 );
 router.put(
+  "/:id/deadline",
+  authorize("admin"),
+  ticketController.updateTicketDeadline
+);
+router.put(
   "/:id/escalate",
   authorize("petugas"),
   ticketController.escalateTicket

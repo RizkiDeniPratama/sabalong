@@ -12,4 +12,10 @@ router.get(
   dashboardAnalyticController.getDashboardAnalytics
 );
 
+router.get(
+  "/sla-report",
+  authorize("admin", "pimpinan"),
+  dashboardAnalyticController.getSLAReport
+);
+
 export default router;

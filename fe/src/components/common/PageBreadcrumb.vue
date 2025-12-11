@@ -8,7 +8,7 @@
         <li>
           <router-link
             class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
-            to="/"
+            :to="homeRoute"
           >
             Home
             <svg
@@ -38,11 +38,30 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
+import { computed } from 'vue'
+import { useAuthStore } from '@/store/auth'
 
 interface BreadcrumbProps {
   pageTitle: string
 }
 
 defineProps<BreadcrumbProps>()
+
+const authStore = useAuthStore()
+
+const homeRoute = computed(() => {
+  if (!authStore.isAuthenticated) {
+    return { name: 'LandingPage' }
+  }
+  switch (authStore.userRole) {
+    case 'admin':
+      return { name: 'Analytic' }
+    case 'petugas':
+      return { name: 'PetugasDashboard' }
+    case 'user':
+      return { name: 'UserDashboard' }
+    default:
+      return { name: 'LandingPage' }
+  }
+})
 </script>

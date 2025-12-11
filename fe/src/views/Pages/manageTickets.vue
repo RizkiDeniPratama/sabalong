@@ -117,6 +117,7 @@
             >
               <tr>
                 <th class="px-6 py-4">Tiket & SLA</th>
+                <th class="px-6 py-4">Response Timer</th>
                 <th class="px-6 py-4">Pelapor</th>
                 <th class="px-6 py-4">Layanan</th>
                 <th class="px-6 py-4">Prioritas</th>
@@ -127,7 +128,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
               <tr v-if="loading.tickets">
-                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                   Memuat data tiket...
                 </td>
               </tr>
@@ -177,6 +178,37 @@
                     <div v-else class="text-xs text-gray-500">
                       {{ formatDate(ticket.created_at) }}
                     </div>
+                  </div>
+                </td>
+
+                <!-- Response Timer Column -->
+                <td class="px-6 py-4">
+                  <div v-if="!ticket.assigned_to_id && !ticket.first_response_at && ticket.response_deadline">
+                    <span
+                      :class="[
+                        'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-semibold border',
+                        getResponseSLAClass(ticket.response_deadline),
+                      ]"
+                    >
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      {{ getResponseSLAText(ticket.response_deadline) }}
+                    </span>
+                    <div class="text-[10px] text-gray-500 mt-0.5">
+                      Response needed
+                    </div>
+                  </div>
+                  <div v-else-if="ticket.first_response_at" class="text-xs text-green-600">
+                    ✓ Responded
+                  </div>
+                  <div v-else class="text-xs text-gray-400">
+                    -
                   </div>
                 </td>
 
@@ -639,6 +671,39 @@ const getSLAText = (deadlineStr?: string) => {
   if (days > 0) return `${days} Hari Lagi`
   if (hours > 0) return `${hours} Jam Lagi`
   return '< 1 Jam Lagi'
+}
+
+// Logic untuk warna Response SLA
+const getResponseSLAClass = (deadlineStr?: string) => {
+  if (!deadlineStr)
+    return 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
+
+  const deadline = new Date(deadlineStr).getTime()
+  const now = new Date().getTime()
+  const diffHours = (deadline - now) / (1000 * 60 * 60)
+
+  if (diffHours < 0)
+    return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-900/50' // Telat
+  if (diffHours < 2)
+    return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-900/50' // Warning (< 2 jam)
+  return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-900/50' // Perlu Response
+}
+
+// Logic untuk teks Response SLA
+const getResponseSLAText = (deadlineStr?: string) => {
+  if (!deadlineStr) return 'No Response SLA'
+
+  const deadline = new Date(deadlineStr).getTime()
+  const now = new Date().getTime()
+  const diff = deadline - now
+
+  if (diff < 0) return 'Response Terlambat!'
+
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+  if (hours > 0) return `${hours}j ${minutes}m`
+  return `${minutes}m lagi`
 }
 
 // --- HANDLERS LAINNYA ---

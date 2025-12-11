@@ -48,18 +48,33 @@ const goBack = () => {
 }
 
 const goToDashboard = () => {
-  router.push('/user/dashboard')
+  const userRole = authStore.userRole
+  if (userRole === 'admin') {
+    router.push({ name: 'Analytic' })
+  } else if (userRole === 'petugas') {
+    router.push({ name: 'PetugasDashboard' })
+  } else if (userRole === 'user') {
+    router.push({ name: 'UserDashboard' })
+  } else {
+    // Fallback for any other roles or if role is null
+    router.push({ name: 'LandingPage' })
+  }
   showUserMenu.value = false
 }
 
 const goToCreateTicket = () => {
-  router.push('/user/tickets/create')
+  if (authStore.isAuthenticated) {
+    router.push('/user/tickets/create')
+  } else {
+    authStore.setIntendedUrl('/user/tickets/create')
+    router.push('/signin')
+  }
 }
 
 const handleLogout = () => {
   authStore.logout()
   showUserMenu.value = false
-  router.push('/')
+  router.push({ name: 'LandingPage' })
 }
 
 const handleScroll = () => {
@@ -147,7 +162,10 @@ onUnmounted(() => {
           <div v-if="showBackButton" class="h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
 
           <!-- Logo -->
-          <router-link to="/" class="flex items-center gap-3 group cursor-pointe">
+          <router-link
+            :to="{ name: 'LandingPage' }"
+            class="flex items-center gap-3 group cursor-pointe"
+          >
             <div class="relative">
               <div
                 class="relative w-10 h-10 rounded-lg flex items-center justify-center text-xl transform group-hover:scale-110 transition-transform"
@@ -209,7 +227,7 @@ onUnmounted(() => {
           <!-- NOT LOGGED IN -->
           <template v-if="!authStore.isAuthenticated">
             <router-link
-              to="/signin"
+              :to="{ name: 'Signin' }"
               class="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -224,7 +242,7 @@ onUnmounted(() => {
             </router-link>
 
             <router-link
-              to="/signin"
+              :to="{ name: 'Signin' }"
               class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all text-sm"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,7 +260,7 @@ onUnmounted(() => {
           <!-- LOGGED IN -->
           <template v-else>
             <!-- Dashboard Button (Desktop only) -->
-            <button
+            <!-- <button
               @click="goToDashboard"
               class="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
             >
@@ -255,7 +273,7 @@ onUnmounted(() => {
                 />
               </svg>
               Dashboard
-            </button>
+            </button> -->
 
             <!-- Create Ticket Button -->
             <button

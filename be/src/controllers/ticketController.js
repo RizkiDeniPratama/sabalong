@@ -1,10 +1,12 @@
 import prisma from "../config/prisma.js";
+import { calculateSLADeadline } from "../helpers/slaCalculator.js";
+import { getNextWorkingHourStart } from "../helpers/slaWork.js";
 
-function addHoursToDate(date, hours) {
-  const newDate = new Date(date);
-  newDate.setHours(newDate.getHours() + hours);
-  return newDate;
-}
+// function addHoursToDate(date, hours) {
+//   const newDate = new Date(date);
+//   newDate.setHours(newDate.getHours() + hours);
+//   return newDate;
+// }
 
 export async function createTicket(req, res) {
   try {
@@ -15,6 +17,7 @@ export async function createTicket(req, res) {
     } else if (req.body.attachment) {
       attachmentPath = req.body.attachment;
     }
+
     const { service_id, judul_permohonan, deskripsi } = req.body;
     const requesterId = req.user.id;
 
@@ -37,18 +40,19 @@ export async function createTicket(req, res) {
     }
 
     const now = new Date();
-    const response_deadline = addHoursToDate(now, service.sla.response_hours);
-    const resolution_deadline = addHoursToDate(
-      now,
-      service.sla.resolution_hours
-    );
     const ticket_number = `TKT-${Date.now()}`;
+
+    // Response deadline mulai dari jam kerja berikutnya
+    const slaStartTime = getNextWorkingHourStart(now);
+
+    const responseDeadline = calculateSLADeadline(
+      slaStartTime,
+      service.sla.response_hours
+    );
 
     const staffToNotify = await prisma.user.findMany({
       where: {
-        role: {
-          role_name: { in: ["admin", "petugas"] },
-        },
+        role: { role_name: { in: ["admin", "petugas"] } },
         is_active: true,
       },
       select: { id: true },
@@ -63,20 +67,31 @@ export async function createTicket(req, res) {
           attachment: attachmentPath,
           priority: service.default_priority,
           status: "pending",
-          response_deadline,
-          resolution_deadline,
           created_at: now,
           user_id: requesterId,
           service_id: parseInt(service_id),
+
+          // Response deadline dihitung dari jam kerja berikutnya
+          response_deadline: responseDeadline,
+          resolution_deadline: null,
         },
       });
+
+      // Cek apakah ticket dibuat di luar jam kerja
+      const isOutsideWorkingHours = slaStartTime.getTime() !== now.getTime();
 
       await tx.ticketLog.create({
         data: {
           ticket_id: ticket.id,
           action_by: requesterId,
           action_type: "created",
-          notes: "Tiket berhasil dibuat oleh pemohon.",
+          notes: isOutsideWorkingHours
+            ? `Tiket anda dibuat di luar jam kerja (${now.toLocaleString(
+                "id-ID"
+              )}). Tiket akan diterima dan diperiksa dimulai pada ${slaStartTime.toLocaleString(
+                "id-ID"
+              )}.`
+            : "Tiket berhasil dibuat oleh pemohon.",
         },
       });
 
@@ -86,7 +101,13 @@ export async function createTicket(req, res) {
           ticket_id: ticket.id,
           type: "new_ticket",
           title: "Tiket Baru Dibuat",
-          message: `Tiket baru #${ticket_number} telah dibuat oleh ${req.user.nama}.`,
+          message: isOutsideWorkingHours
+            ? `Tiket baru #${ticket_number} dibuat di luar jam kerja. Response deadline: ${responseDeadline.toLocaleString(
+                "id-ID"
+              )}.`
+            : `Tiket baru #${ticket_number} telah dibuat. Response deadline: ${responseDeadline.toLocaleString(
+                "id-ID"
+              )}.`,
         }));
         await tx.notification.createMany({
           data: notifications,
@@ -98,10 +119,20 @@ export async function createTicket(req, res) {
 
     res.status(201).json({
       success: true,
-      message: "Tiket berhasil dibuat",
+      message:
+        slaStartTime.getTime() !== now.getTime()
+          ? "Tiket berhasil dibuat. Response SLA akan dimulai saat jam kerja berikutnya."
+          : "Tiket berhasil dibuat",
       data: newTicket,
+      sla_info: {
+        created_at: now.toISOString(),
+        sla_start_time: slaStartTime.toISOString(),
+        response_deadline: responseDeadline.toISOString(),
+        is_outside_working_hours: slaStartTime.getTime() !== now.getTime(),
+      },
     });
   } catch (error) {
+    console.log(error);
     if (error.code === "P2003") {
       return res
         .status(400)
@@ -150,12 +181,10 @@ export async function getAllTickets(req, res) {
       orderBy: orderByClause,
     };
 
-    // ✅ Tambahkan limit jika dikirim (contoh ?limit=5)
     if (limit) {
       options.take = parseInt(limit);
     }
 
-    // ✅ Gunakan options ini
     const tickets = await prisma.ticket.findMany(options);
 
     res.json({ success: true, data: tickets });
@@ -231,6 +260,7 @@ export async function assignTicket(req, res) {
         .json({ success: false, message: "ID Petugas wajib diisi" });
     }
 
+    // 1. Ambil Petugas
     const petugas = await prisma.user.findFirst({
       where: { id: parseInt(petugas_id), role: { role_name: "petugas" } },
     });
@@ -241,39 +271,85 @@ export async function assignTicket(req, res) {
         .json({ success: false, message: "Petugas tidak ditemukan" });
     }
 
+    // 2. Ambil Data Tiket & SLA Service-nya
+    const existingTicket = await prisma.ticket.findUnique({
+      where: { id: parseInt(ticketId) },
+      include: { service: { include: { sla: true } } },
+    });
+
+    if (!existingTicket) {
+      return res.status(404).json({ message: "Tiket tidak ditemukan" });
+    }
+
+    const startTime = new Date();
+
+    // ✅ LOGIKA BARU:
+    // - Response deadline: tetap pakai yang lama (sudah jalan sejak create)
+    // - Resolution deadline: baru dihitung sekarang (mulai saat assign)
+
+    // Cek apakah ini FIRST ASSIGNMENT atau RE-ASSIGNMENT
+    const isFirstAssignment = existingTicket.assigned_to_id === null;
+
+    // ✅ Resolution Deadline HANYA dihitung saat FIRST ASSIGNMENT
+    // Jika re-assignment (eskalasi), TIDAK di-reset (tetap pakai deadline lama)
+    let resolutionDeadline = existingTicket.resolution_deadline;
+
+    if (isFirstAssignment) {
+      // Hitung resolution deadline BARU (mulai dari sekarang)
+      resolutionDeadline = calculateSLADeadline(
+        startTime,
+        existingTicket.service.sla.resolution_hours
+      );
+    }
+    // Else: pakai deadline yang sudah ada (tidak reset)
+
     const updatedTicket = await prisma.$transaction(async (tx) => {
       const ticket = await tx.ticket.update({
         where: { id: parseInt(ticketId) },
         data: {
           assigned_to_id: parseInt(petugas_id),
-          status: "on_progress", // Otomatis jadi 'on_progress'
+          status: "on_progress",
+
+          // ✅ Response deadline tetap (sudah jalan sejak create)
+          // Tidak perlu di-update
+
+          // ✅ Resolution deadline: set hanya jika first assignment
+          resolution_deadline: resolutionDeadline,
+
+          // ✅ First response: catat hanya jika belum ada
+          first_response_at: existingTicket.first_response_at || startTime,
         },
       });
 
       await tx.user.update({
         where: { id: parseInt(petugas_id) },
-        data: { is_available: false }, // Petugas jadi sibuk
+        data: { is_available: false },
       });
 
       await tx.ticketLog.create({
         data: {
           ticket_id: ticket.id,
           action_by: adminId,
-          action_type: "assigned",
-          old_value: ticket.status,
+          action_type: isFirstAssignment ? "assigned" : "reassigned",
+          old_value: existingTicket.status,
           new_value: "on_progress",
-          notes: `Tiket ditugaskan kepada ${petugas.nama}.`,
+          notes: isFirstAssignment
+            ? `Tiket ditugaskan kepada ${petugas.nama}. SLA Resolution dimulai.`
+            : `Tiket ditugaskan ulang kepada ${petugas.nama}. SLA Resolution tetap berjalan (tidak reset).`,
         },
       });
 
-      // Buat Notifikasi untuk Petugas yang ditugaskan
       await tx.notification.create({
         data: {
           user_id: petugas.id,
           ticket_id: ticket.id,
           type: "assigned",
           title: "Tugas Tiket Baru",
-          message: `Anda telah ditugaskan untuk tiket #${ticket.ticket_number}.`,
+          message: `Anda telah ditugaskan untuk tiket #${
+            ticket.ticket_number
+          }. Resolution deadline: ${resolutionDeadline.toLocaleString(
+            "id-ID"
+          )}.`,
         },
       });
 
@@ -302,7 +378,7 @@ export async function assignTicket(req, res) {
 export async function updateTicketStatus(req, res) {
   try {
     const { id: ticketId } = req.params;
-    const { status, notes } = req.body; // Status baru: 'on_progress', 'selesai', 'closed', 'on_hold'
+    const { status, notes } = req.body;
     const { id: userId, role: userRole } = req.user;
 
     if (!status) {
@@ -311,8 +387,18 @@ export async function updateTicketStatus(req, res) {
         .json({ success: false, message: "Status wajib diisi" });
     }
 
-    // Validasi status
-    const validStatus = ["on_progress", "selesai", "closed", "on_hold"];
+    // Validasi status - Support both old and new status formats
+    const validStatus = [
+      // New standardized statuses
+      "in_progress",
+      "completed",
+      "closed",
+      "pending",
+      // Legacy statuses (for backward compatibility)
+      "on_progress",
+      "selesai",
+      "on_hold",
+    ];
     if (!validStatus.includes(status)) {
       return res
         .status(400)
@@ -330,7 +416,7 @@ export async function updateTicketStatus(req, res) {
         .json({ success: false, message: "Tiket tidak ditemukan" });
     }
 
-    // Otorisasi: Hanya Admin atau Petugas yang ditugaskan
+    // Otorisasi: Admin bisa update semua, Petugas hanya tiket mereka sendiri
     if (userRole !== "admin" && ticket.assigned_to_id !== userId) {
       return res.status(403).json({
         success: false,
@@ -340,14 +426,31 @@ export async function updateTicketStatus(req, res) {
 
     const oldStatus = ticket.status;
 
-    // Logika jika status 'selesai'
+    // Normalize status (convert legacy to new format)
+    const normalizedStatus =
+      {
+        selesai: "completed",
+        on_progress: "in_progress",
+        on_hold: "pending",
+      }[status] || status;
+
+    // Business Logic: completed otomatis jadi closed
+    const finalStatus =
+      normalizedStatus === "completed" ? "closed" : normalizedStatus;
+
+    // Logika update data
     const dataToUpdate = {
-      status: status,
-      completed_at: status === "selesai" ? new Date() : null, // Catat waktu selesai
+      status: finalStatus,
+      completed_at: ["completed", "selesai"].includes(status)
+        ? new Date()
+        : null,
     };
 
     // Catat first response jika ini respons pertama
-    if (status === "on_progress" && !ticket.first_response_at) {
+    if (
+      ["in_progress", "on_progress"].includes(status) &&
+      !ticket.first_response_at
+    ) {
       dataToUpdate.first_response_at = new Date();
     }
 
@@ -358,9 +461,9 @@ export async function updateTicketStatus(req, res) {
         data: dataToUpdate,
       });
 
-      // 2. Jika 'selesai' ATAU 'closed', buat petugas 'available' lagi
+      // 2. Jika 'completed' ATAU 'closed', buat petugas 'available' lagi
       if (
-        (status === "selesai" || status === "closed") &&
+        ["completed", "selesai", "closed"].includes(status) &&
         ticket.assigned_to_id
       ) {
         await tx.user.update({
@@ -409,6 +512,103 @@ export async function updateTicketStatus(req, res) {
     res.status(500).json({
       success: false,
       message: "Gagal mengubah status tiket",
+      error: error.message,
+    });
+  }
+}
+
+export async function updateTicketDeadline(req, res) {
+  try {
+    const { id: ticketId } = req.params;
+    const { resolution_deadline, response_deadline, reason, extend_only } =
+      req.body;
+    const { role: userRole, id: adminId } = req.user;
+
+    // 1. Validasi: Hanya Admin
+    if (userRole !== "admin") {
+      return res
+        .status(403)
+        .json({ message: "Hanya Admin yang bisa mengubah deadline." });
+    }
+
+    if (!resolution_deadline) {
+      return res
+        .status(400)
+        .json({ message: "Resolution deadline wajib diisi." });
+    }
+
+    // 2. Ambil tiket untuk validasi
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: parseInt(ticketId) },
+    });
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Tiket tidak ditemukan",
+      });
+    }
+
+    // 3. Validasi perpanjangan waktu (extend_only)
+    if (extend_only) {
+      // Hanya boleh perpanjang jika tiket pernah eskalasi
+      if (!ticket.eskalasi_from_id) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Perpanjangan waktu hanya berlaku untuk tiket yang pernah dieskalasi",
+        });
+      }
+
+      // Validasi bahwa deadline baru lebih lama dari sekarang
+      const currentDeadline = new Date(ticket.resolution_deadline);
+      const newDeadline = new Date(resolution_deadline);
+
+      if (newDeadline <= currentDeadline) {
+        return res.status(400).json({
+          success: false,
+          message: "Perpanjangan waktu harus lebih lama dari deadline saat ini",
+        });
+      }
+    }
+
+    // 4. Update Database
+    const updatedTicket = await prisma.$transaction(async (tx) => {
+      const t = await tx.ticket.update({
+        where: { id: parseInt(ticketId) },
+        data: {
+          resolution_deadline: new Date(resolution_deadline),
+          // Opsional: Update response deadline juga jika dikirim
+          ...(response_deadline && {
+            response_deadline: new Date(response_deadline),
+          }),
+        },
+      });
+
+      // 3. Catat di Log agar transparan
+      await tx.ticketLog.create({
+        data: {
+          ticket_id: t.id,
+          action_by: adminId,
+          action_type: "system_update", // Atau buat tipe baru 'deadline_changed'
+          notes: `Deadline diubah oleh Admin. Alasan: ${
+            reason || "-"
+          }. Deadline baru: ${resolution_deadline}`,
+        },
+      });
+
+      return t;
+    });
+
+    res.json({
+      success: true,
+      message: "Deadline tiket berhasil diperbarui",
+      data: updatedTicket,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Gagal update deadline",
       error: error.message,
     });
   }
@@ -535,24 +735,25 @@ export async function escalateTicket(req, res) {
     });
 
     const escalatedTicket = await prisma.$transaction(async (tx) => {
-      // 1. Update tiket
+      // Update tiket - status jadi pending (timer pause)
       const updated = await tx.ticket.update({
         where: { id: parseInt(ticketId) },
         data: {
-          status: "eskalasi", // Ubah status
-          eskalasi_from_id: userId, // Catat siapa yg eskalasi
+          status: "pending", // Timer akan pause
+          eskalasi_from_id: userId,
           eskalasi_reason: eskalasi_reason,
           assigned_to_id: null, // Kosongkan petugas (agar bisa di-assign ulang)
+          // Deadline tidak diubah di sini, gunakan updateTicketDeadline terpisah
         },
       });
 
-      // 2. Buat petugas jadi 'available' lagi
+      // Buat petugas jadi 'available' lagi
       await tx.user.update({
         where: { id: userId },
         data: { is_available: true },
       });
 
-      // 3. Buat log
+      // Buat log
       await tx.ticketLog.create({
         data: {
           ticket_id: updated.id,
@@ -560,18 +761,21 @@ export async function escalateTicket(req, res) {
           action_type: "escalated",
           old_value: ticket.status,
           new_value: "eskalasi",
-          notes: eskalasi_reason,
+          notes: `${eskalasi_reason} | ⚠️ SLA tetap berjalan (tidak di-reset). Resolution deadline: ${
+            ticket.resolution_deadline?.toLocaleString("id-ID") ||
+            "belum di-set"
+          }.`,
         },
       });
 
-      // 4. Buat Notifikasi untuk semua Admin
+      // Buat Notifikasi untuk semua Admin
       if (admins.length > 0) {
         const notifications = admins.map((admin) => ({
           user_id: admin.id,
           ticket_id: ticket.id,
           type: "escalation",
           title: "Tiket Dieskalasi",
-          message: `Tiket #${ticket.ticket_number} telah dieskalasi oleh ${req.user.nama}.`,
+          message: `Tiket #${ticket.ticket_number} telah dieskalasi oleh ${req.user.nama}. Deadline tetap berjalan!`,
         }));
         await tx.notification.createMany({
           data: notifications,
@@ -583,7 +787,8 @@ export async function escalateTicket(req, res) {
 
     res.json({
       success: true,
-      message: "Tiket berhasil dieskalasi dan dikembalikan ke antrian",
+      message:
+        "Tiket berhasil dieskalasi. SLA tetap berjalan (tidak di-reset).",
       data: escalatedTicket,
     });
   } catch (error) {

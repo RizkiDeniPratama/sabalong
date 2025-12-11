@@ -91,8 +91,6 @@ export async function getUserById(req, res) {
 }
 
 export async function getProfile(req, res) {
-  console.log("req.user = ", req.user);
-
   try {
     const { id } = req.user;
 

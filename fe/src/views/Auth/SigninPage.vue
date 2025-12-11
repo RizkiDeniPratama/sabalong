@@ -18,6 +18,30 @@
                   Enter your email and password to sign in!
                 </p>
               </div>
+              <div
+                v-if="hasIntendedUrl"
+                class="mb-5 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg animate-fade-in"
+              >
+                <div class="flex items-start gap-3">
+                  <svg
+                    class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <div class="text-sm text-blue-800 dark:text-blue-300">
+                    <p class="font-semibold mb-1">🔐 Login Diperlukan</p>
+                    <p>Silakan login untuk melanjutkan pembuatan tiket.</p>
+                  </div>
+                </div>
+              </div>
               <div>
                 <form @submit.prevent="handleSubmit">
                   <div class="space-y-5">
@@ -201,8 +225,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue' // ← TAMBAHKAN computed
+import { useRouter, useRoute } from 'vue-router' // ← TAMBAHKAN useRoute
 import { useAuthStore } from '../../store/auth'
 import CommonGridShape from '@/components/common/CommonGridShape.vue'
 import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
@@ -217,6 +241,9 @@ const errorMessage = ref('')
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute() // ← TAMBAHKAN INI
+
+const hasIntendedUrl = computed(() => !!authStore.intendedUrl)
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
@@ -232,7 +259,25 @@ const handleSubmit = async () => {
       password: password.value,
     })
 
+    console.log('Login successful, checking redirect...')
+
+    const intendedUrl = authStore.getAndClearIntendedUrl()
+    if (intendedUrl) {
+      console.log('Redirecting to intended URL:', intendedUrl)
+      router.push(intendedUrl)
+      return
+    }
+
+    const redirectPath = route.query.redirect as string
+    if (redirectPath && redirectPath !== '/signin') {
+      console.log('Redirecting to query redirect:', redirectPath)
+      router.push(redirectPath)
+      return
+    }
+
     const role = authStore.userRole
+    console.log('Default redirect for role:', role)
+
     if (role === 'admin' || role === 'pimpinan') {
       router.push({ name: 'Analytic' })
     } else if (role === 'petugas') {
@@ -240,7 +285,7 @@ const handleSubmit = async () => {
     } else if (role === 'user') {
       router.push({ name: 'UserDashboard' })
     } else {
-      router.push({ name: 'Signin' })
+      router.push({ name: 'LandingPage' })
     }
   } catch (error: any) {
     if (error.response && error.response.data) {

@@ -2,6 +2,9 @@ import prisma from "../config/prisma.js";
 
 export async function createFeedback(req, res) {
   try {
+    console.log("=== CREATE FEEDBACK DEBUG ===");
+    console.log("Request Body:", req.body);
+    console.log("User from JWT:", req.user);
     const { ticket_id, rating, review } = req.body;
     const { id: userId, role: userRole } = req.user;
 
@@ -30,8 +33,8 @@ export async function createFeedback(req, res) {
         .json({ success: false, message: "Anda bukan pemilik tiket ini" });
     }
 
-    // 4. Validasi Logika Bisnis: Hanya tiket 'selesai'
-    if (ticket.status !== "selesai") {
+    // 4. Validasi Logika Bisnis: Hanya tiket 'completed' atau 'selesai'
+    if (!["completed", "selesai"].includes(ticket.status)) {
       return res
         .status(400)
         .json({ success: false, message: "Tiket ini belum selesai" });
@@ -41,6 +44,7 @@ export async function createFeedback(req, res) {
     const existingFeedback = await prisma.feedback.findUnique({
       where: { ticket_id: parseInt(ticket_id) },
     });
+    console.log("existingFeedback ", existingFeedback);
 
     if (existingFeedback) {
       return res.status(400).json({

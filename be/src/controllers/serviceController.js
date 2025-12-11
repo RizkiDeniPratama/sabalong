@@ -65,27 +65,63 @@ export async function createService(req, res) {
       kategori,
       sla_id,
       default_priority,
-      icon,
-      skill_ids, // Ini akan berupa array ID skill, misal: [1, 2, 5]
+      skill_ids, // String JSON jika dari FormData
+      sop, // String text jika bukan file
     } = req.body;
 
-    // Validasi input dasar
-    if (
-      !nama_layanan ||
-      !sla_id ||
-      !skill_ids ||
-      !Array.isArray(skill_ids) ||
-      skill_ids.length === 0
-    ) {
+    // --- 1. HANDLE FILE UPLOADS ---
+    let iconPath = null;
+    let flowchartPath = null;
+    let sopPath = sop || null; // Default ambil dari text input jika ada
+
+    // Cek file yang diupload
+    if (req.files) {
+      if (req.files.icon?.[0]) {
+        iconPath = "/uploads/" + req.files.icon[0].filename;
+      }
+      if (req.files.flowchart?.[0]) {
+        flowchartPath = "/uploads/" + req.files.flowchart[0].filename;
+      }
+      if (req.files.sop_file?.[0]) {
+        // Jika ada file SOP, timpa text SOP
+        sopPath = "/uploads/" + req.files.sop_file[0].filename;
+      }
+    }
+
+    // --- 2. VALIDASI ---
+    if (!nama_layanan || !sla_id || !skill_ids) {
       return res.status(400).json({
         success: false,
-        message: "Nama layanan, ID SLA, dan minimal satu ID Skill wajib diisi",
+        message: "Nama layanan, SLA, dan skill wajib diisi",
       });
     }
 
-    // Gunakan transaksi Prisma untuk memastikan semua operasi berhasil atau gagal bersamaan
+    // Parse skill_ids (karena FormData mengirim array sebagai string JSON)
+    let parsedSkillIds = [];
+    try {
+      parsedSkillIds =
+        typeof skill_ids === "string" ? JSON.parse(skill_ids) : skill_ids;
+
+      if (!Array.isArray(parsedSkillIds)) {
+        throw new Error("Bukan array");
+      }
+    } catch (e) {
+      return res.status(400).json({
+        success: false,
+        message: "Format skill_ids tidak valid (harus array JSON)",
+      });
+    }
+
+    if (parsedSkillIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Minimal satu skill harus dipilih",
+      });
+    }
+
+    // --- 3. SIMPAN KE DB ---
     const newService = await prisma.$transaction(async (tx) => {
-      // 1. Buat ServiceCatalog dulu
+      // A. Buat Service
       const service = await tx.serviceCatalog.create({
         data: {
           nama_layanan,
@@ -93,27 +129,28 @@ export async function createService(req, res) {
           kategori,
           sla_id: parseInt(sla_id),
           default_priority,
-          icon,
-          is_active: true, // Default aktif saat dibuat
+          is_active: true, // Default aktif
+
+          // File Paths
+          icon: iconPath,
+          flowchart: flowchartPath,
+          sop: sopPath,
         },
       });
 
-      // 2. Siapkan data untuk tabel pivot ServiceSkill
-      const serviceSkillData = skill_ids.map((skillId) => ({
+      // B. Buat Relasi Skill
+      const skillData = parsedSkillIds.map((id) => ({
         service_id: service.id,
-        skill_id: parseInt(skillId),
+        skill_id: parseInt(id),
       }));
 
-      // 3. Masukkan data ke ServiceSkill
-      await tx.serviceSkill.createMany({
-        data: serviceSkillData,
-      });
+      await tx.serviceSkill.createMany({ data: skillData });
 
-      return service; // Kembalikan data service yang baru dibuat
+      return service;
     });
 
-    // Ambil data lengkap service yang baru dibuat beserta relasinya
-    const createdServiceWithDetails = await prisma.serviceCatalog.findUnique({
+    // Ambil data lengkap untuk response
+    const createdService = await prisma.serviceCatalog.findUnique({
       where: { id: newService.id },
       include: {
         sla: true,
@@ -124,24 +161,23 @@ export async function createService(req, res) {
     res.status(201).json({
       success: true,
       message: "Layanan berhasil dibuat",
-      data: createdServiceWithDetails,
+      data: createdService,
     });
   } catch (error) {
+    console.error(error);
     if (error.code === "P2002") {
       return res
         .status(400)
-        .json({ success: false, message: "Nama layanan sudah ada" });
+        .json({ success: false, message: "Nama layanan sudah digunakan" });
     }
     if (error.code === "P2003") {
-      // Foreign key constraint failed (misal skill_id tidak ada)
-      return res.status(400).json({
-        success: false,
-        message: "ID SLA atau salah satu ID Skill tidak valid.",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "SLA ID atau Skill ID tidak valid" });
     }
     res.status(500).json({
       success: false,
-      message: "Gagal membuat layanan baru",
+      message: "Gagal membuat layanan",
       error: error.message,
     });
   }
@@ -155,50 +191,88 @@ export async function updateService(req, res) {
     kategori,
     sla_id,
     default_priority,
-    icon,
     is_active,
-    skill_ids, // Bisa jadi array ID skill yang baru
+    skill_ids,
+    sop,
+    icon,
   } = req.body;
 
   try {
+    // --- 1. SIAPKAN DATA UPDATE ---
+    let dataToUpdate = {
+      nama_layanan,
+      deskripsi,
+      kategori,
+      default_priority,
+    };
+
+    // Handle Boolean is_active (FormData mengirim string "true"/"false")
+    if (typeof is_active !== "undefined") {
+      dataToUpdate.is_active =
+        String(is_active) === "true" || is_active === true || is_active === 1;
+    }
+
+    if (sla_id) dataToUpdate.sla_id = parseInt(sla_id);
+
+    // Update Text SOP jika ada
+    if (sop) dataToUpdate.sop = sop;
+
+    // --- 2. HANDLE FILE UPLOADS ---
+    // Jika tidak ada file icon baru, tapi ada string icon lama, biarkan (jangan di-null-kan)
+    // Jika ada file icon baru, update path-nya
+
+    if (req.files) {
+      if (req.files.icon?.[0]) {
+        dataToUpdate.icon = "/uploads/" + req.files.icon[0].filename;
+      }
+      if (req.files.flowchart?.[0]) {
+        dataToUpdate.flowchart = "/uploads/" + req.files.flowchart[0].filename;
+      }
+      if (req.files.sop_file?.[0]) {
+        dataToUpdate.sop = "/uploads/" + req.files.sop_file[0].filename;
+      }
+    }
+
+    // --- 3. HANDLE SKILLS ---
+    let parsedSkillIds = null;
+    if (typeof skill_ids !== "undefined") {
+      try {
+        parsedSkillIds =
+          typeof skill_ids === "string" ? JSON.parse(skill_ids) : skill_ids;
+        if (!Array.isArray(parsedSkillIds)) throw new Error();
+      } catch (e) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Format skill_ids tidak valid" });
+      }
+    }
+
+    // --- 4. TRANSAKSI DB ---
     const updatedService = await prisma.$transaction(async (tx) => {
-      // 1. Update data dasar ServiceCatalog
+      // A. Update Service
       const service = await tx.serviceCatalog.update({
         where: { id: parseInt(id) },
-        data: {
-          nama_layanan,
-          deskripsi,
-          kategori,
-          sla_id: sla_id ? parseInt(sla_id) : undefined,
-          default_priority,
-          icon,
-          is_active,
-        },
+        data: dataToUpdate,
       });
 
-      // 2. Jika ada `skill_ids` baru, update relasi di ServiceSkill
-      if (skill_ids && Array.isArray(skill_ids)) {
-        // Hapus relasi skill lama
-        await tx.serviceSkill.deleteMany({
-          where: { service_id: service.id },
-        });
+      // B. Update Skills (Hapus Lama -> Buat Baru)
+      if (parsedSkillIds !== null) {
+        await tx.serviceSkill.deleteMany({ where: { service_id: service.id } });
 
-        // Buat relasi skill baru (jika array tidak kosong)
-        if (skill_ids.length > 0) {
-          const serviceSkillData = skill_ids.map((skillId) => ({
+        if (parsedSkillIds.length > 0) {
+          const skillData = parsedSkillIds.map((skillId) => ({
             service_id: service.id,
             skill_id: parseInt(skillId),
           }));
-          await tx.serviceSkill.createMany({
-            data: serviceSkillData,
-          });
+          await tx.serviceSkill.createMany({ data: skillData });
         }
       }
+
       return service;
     });
 
-    // Ambil data lengkap setelah update
-    const finalUpdatedService = await prisma.serviceCatalog.findUnique({
+    // Ambil data lengkap
+    const finalService = await prisma.serviceCatalog.findUnique({
       where: { id: updatedService.id },
       include: {
         sla: true,
@@ -209,25 +283,15 @@ export async function updateService(req, res) {
     res.json({
       success: true,
       message: "Layanan berhasil diperbarui",
-      data: finalUpdatedService,
+      data: finalService,
     });
   } catch (error) {
-    if (error.code === "P2002") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Nama layanan sudah digunakan." });
-    }
-    if (error.code === "P2025") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Layanan tidak ditemukan." });
-    }
-    if (error.code === "P2003") {
-      return res.status(400).json({
-        success: false,
-        message: "ID SLA atau salah satu ID Skill tidak valid.",
-      });
-    }
+    console.error(error);
+    if (error.code === "P2025")
+      return res.status(404).json({ message: "Layanan tidak ditemukan" });
+    if (error.code === "P2002")
+      return res.status(400).json({ message: "Nama layanan sudah digunakan" });
+
     res.status(500).json({
       success: false,
       message: "Gagal memperbarui layanan",

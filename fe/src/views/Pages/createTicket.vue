@@ -336,7 +336,7 @@ const submitTicket = async () => {
 
     if (res.data.success) {
       alert('Tiket berhasil dibuat!')
-      router.push(`/user/tickets/${res.data.data.id}`)
+      router.push(`/detail-ticket/${res.data.data.id}`)
     }
   } catch (err: any) {
     console.group('DEBUG ERROR TIKET')

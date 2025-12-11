@@ -101,6 +101,16 @@
               Beri Ulasan
             </button>
           </div>
+          
+          <!-- Show feedback thank you message if already rated -->
+          <div v-else-if="isUser && ['completed', 'selesai'].includes(ticket?.status || '') && ticket?.feedback">
+            <div class="flex items-center gap-2 rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              Terima kasih atas ulasan Anda
+            </div>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -128,6 +138,55 @@
               </div>
 
               <div class="p-6 space-y-6">
+                <!-- Response Timer for Admin (Unassigned Tickets) -->
+                <div
+                  v-if="isAdmin && !ticket.assigned_to_id && !ticket.first_response_at && ticket.response_deadline"
+                  class="p-4 rounded-xl border shadow-sm"
+                  :class="responseStatus.borderClass"
+                >
+                  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                      <div :class="['p-2 rounded-lg', responseStatus.bgColor, responseStatus.textColor]">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-500">
+                          Waktu Response (Admin)
+                        </p>
+                        <h4 class="text-xl font-bold" :class="responseStatus.textColor">
+                          {{ responseTimer }}
+                        </h4>
+                      </div>
+                    </div>
+
+                    <div class="flex-1 max-w-xs">
+                      <div class="flex justify-between text-xs mb-1">
+                        <span :class="responseStatus.textColor">{{ responseProgress }}%</span>
+                        <span class="text-gray-400"
+                          >Deadline: {{ formatDateShort(ticket.response_deadline) }}</span
+                        >
+                      </div>
+                      <div
+                        class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700 overflow-hidden"
+                      >
+                        <div
+                          class="h-2 rounded-full transition-all duration-500"
+                          :class="responseStatus.barColor"
+                          :style="{ width: responseProgress + '%' }"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SLA Timer for Active Tickets -->
                 <div
                   v-if="!isTicketClosed && ticket.resolution_deadline"
                   class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
@@ -170,6 +229,72 @@
                           :style="{ width: slaProgress + '%' }"
                         ></div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+
+
+                <!-- SLA Result for Completed Tickets -->
+                <div
+                  v-if="isTicketClosed && ticket.resolution_deadline && ticket.completed_at"
+                  class="p-4 rounded-xl border shadow-sm"
+                  :class="completedSLAResult.borderClass"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div :class="['p-2 rounded-lg', completedSLAResult.iconBgClass]">
+                        <svg
+                          v-if="completedSLAResult.slaPercentage === 100"
+                          class="w-6 h-6 text-green-600"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        <svg
+                          v-else
+                          class="w-6 h-6"
+                          :class="completedSLAResult.iconClass"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-gray-500">
+                          SLA Performance
+                        </p>
+                        <h4 class="text-xl font-bold" :class="completedSLAResult.textClass">
+                          {{ completedSLAResult.slaPercentage }}% -
+                          {{ completedSLAResult.statusLabel }}
+                        </h4>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-xs text-gray-500">Completed</p>
+                      <p class="text-sm font-medium text-gray-800 dark:text-white">
+                        {{ formatDate(ticket.completed_at) }}
+                      </p>
+                      <p
+                        v-if="completedSLAResult.delayHours > 0"
+                        class="text-xs"
+                        :class="completedSLAResult.textClass"
+                      >
+                        {{ completedSLAResult.delayHours }}h late
+                      </p>
+                      <p v-else class="text-xs text-green-600">On time</p>
                     </div>
                   </div>
                 </div>
@@ -472,12 +597,15 @@
               </div>
             </div>
 
+            <!-- Status Update (Admin + Petugas) -->
             <div
               v-if="!isTicketClosed && (isAdmin || isTicketOwner)"
               class="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
             >
               <div class="border-b border-gray-200 p-4 dark:border-gray-800">
                 <h3 class="font-bold text-sm text-gray-900 dark:text-white">Update Status</h3>
+                <p class="text-xs text-gray-500 mt-1" v-if="isPetugas">Anda dapat: Eskalasi dan Complete tiket</p>
+                <p class="text-xs text-gray-500 mt-1" v-else-if="isAdmin">Admin dapat mengubah status semua tiket</p>
               </div>
               <div class="p-4 space-y-3">
                 <select
@@ -485,17 +613,78 @@
                   class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="">-- Pilih Status --</option>
-                  <option value="on_progress">On Progress</option>
-                  <option value="pending">Pending (Hold)</option>
-                  <option value="selesai">Selesai</option>
-                  <option value="closed" v-if="isAdmin">Closed (Arsip)</option>
+                  <template v-if="isAdmin">
+                    <option value="in_progress">In Progress</option>
+                    <option value="pending">Pending (On Hold)</option>
+                    <option value="completed">Completed</option>
+                    <option value="closed">Closed (Archive)</option>
+                  </template>
+                  <template v-else-if="isPetugas">
+                    <option value="completed">Completed</option>
+                  </template>
                 </select>
                 <button
                   @click="submitStatusUpdate"
                   :disabled="!newStatus || loading.status"
-                  class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 transition"
+                  class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 >
                   {{ loading.status ? 'Menyimpan...' : 'Update Status' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Deadline Management (Admin Only) -->
+            <div
+              v-if="!isTicketClosed && isAdmin"
+              class="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
+            >
+              <div class="border-b border-gray-200 p-4 dark:border-gray-800">
+                <h3 class="font-bold text-sm text-gray-900 dark:text-white">Deadline Management</h3>
+                <p class="text-xs text-gray-500 mt-1">Ubah deadline untuk kasus urgent atau eskalasi</p>
+              </div>
+              <div class="p-4 space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Resolution Deadline
+                  </label>
+                  <input
+                    v-model="newDeadline"
+                    type="datetime-local"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500/20"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">
+                    Current: {{ formatDate(ticket?.resolution_deadline || '') }}
+                  </p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Alasan Perubahan
+                  </label>
+                  <textarea
+                    v-model="deadlineReason"
+                    rows="2"
+                    placeholder="Contoh: Urgent request dari instansi, eskalasi di menit akhir..."
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-brand-500/20 resize-none"
+                  ></textarea>
+                </div>
+                
+                <div v-if="ticket?.eskalasi_from_id" class="flex items-center gap-2">
+                  <input
+                    v-model="isExtensionOnly"
+                    type="checkbox"
+                    id="extensionOnly"
+                    class="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <label for="extensionOnly" class="text-xs text-gray-700 dark:text-gray-300">
+                    Perpanjangan waktu untuk tiket eskalasi (hanya bisa diperpanjang)
+                  </label>
+                </div>
+                <button
+                  @click="submitDeadlineUpdate"
+                  :disabled="!newDeadline || !deadlineReason || loading.deadline"
+                  class="w-full rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {{ loading.deadline ? 'Menyimpan...' : 'Update Deadline' }}
                 </button>
               </div>
             </div>
@@ -508,7 +697,7 @@
       <Transition name="modal">
         <div
           v-if="showAssignModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
           @click.self="closeAssignModal"
         >
           <div
@@ -573,7 +762,7 @@
       <Transition name="modal">
         <div
           v-if="showFeedbackModal"
-          class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
           @click.self="showFeedbackModal = false"
         >
           <div
@@ -628,6 +817,198 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- SLA Congratulations Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div
+          v-if="showSLAModal"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+          @click.self="showSLAModal = false"
+        >
+          <div
+            class="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl p-8 text-center transform transition-all"
+          >
+            <!-- Icon -->
+            <div
+              class="mx-auto mb-6 w-20 h-20 rounded-full flex items-center justify-center"
+              :class="completedSLAResult.iconBgClass"
+            >
+              <svg
+                v-if="completedSLAResult.slaPercentage === 100"
+                class="w-12 h-12 text-green-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <svg
+                v-else
+                class="w-12 h-12"
+                :class="completedSLAResult.iconClass"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+
+            <!-- Title -->
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">🎉 Selamat!</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">Tiket berhasil diselesaikan</p>
+
+            <!-- SLA Stats -->
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 mb-6">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="text-center">
+                  <p class="text-3xl font-bold" :class="completedSLAResult.textClass">
+                    {{ completedSLAResult.slaPercentage }}%
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">SLA Score</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-lg font-semibold" :class="completedSLAResult.textClass">
+                    {{ completedSLAResult.statusLabel }}
+                  </p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600 dark:text-gray-300">Deadline:</span>
+                  <span class="font-medium">{{
+                    formatDate(ticket?.resolution_deadline || '')
+                  }}</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                  <span class="text-gray-600 dark:text-gray-300">Completed:</span>
+                  <span class="font-medium">{{ formatDate(ticket?.completed_at || '') }}</span>
+                </div>
+                <div
+                  v-if="completedSLAResult.delayHours > 0"
+                  class="flex justify-between text-sm mt-1"
+                >
+                  <span class="text-gray-600 dark:text-gray-300">Delay:</span>
+                  <span class="font-medium" :class="completedSLAResult.textClass">
+                    {{ completedSLAResult.delayHours }}h late
+                  </span>
+                </div>
+                <div v-else class="flex justify-between text-sm mt-1">
+                  <span class="text-gray-600 dark:text-gray-300">Status:</span>
+                  <span class="font-medium text-green-600">On time! 🎯</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message -->
+            <div class="mb-6">
+              <p
+                v-if="completedSLAResult.slaPercentage === 100"
+                class="text-green-600 dark:text-green-400 font-medium"
+              >
+                Excellent work! Tiket diselesaikan tepat waktu.
+              </p>
+              <p
+                v-else-if="
+                  completedSLAResult.slaPercentage && completedSLAResult.slaPercentage >= 90
+                "
+                class="text-yellow-600 dark:text-yellow-400 font-medium"
+              >
+                Good job! Sedikit terlambat tapi masih dalam batas wajar.
+              </p>
+              <p
+                v-else-if="
+                  completedSLAResult.slaPercentage && completedSLAResult.slaPercentage >= 70
+                "
+                class="text-orange-600 dark:text-orange-400 font-medium"
+              >
+                Tiket selesai dengan delay. Mari tingkatkan lagi!
+              </p>
+              <p v-else class="text-red-600 dark:text-red-400 font-medium">
+                Tiket selesai dengan delay signifikan. Perlu peningkatan.
+              </p>
+            </div>
+
+            <!-- Close Button -->
+            <button
+              @click="showSLAModal = false"
+              class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Escalation Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div
+          v-if="showEscalationModal"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+          @click.self="showEscalationModal = false"
+        >
+          <div
+            class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-xl overflow-hidden"
+          >
+            <div class="p-4 border-b dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+              <h3 class="font-bold text-gray-900 dark:text-white">Eskalasi Tiket</h3>
+              <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                Tiket akan dieskalasi ke admin untuk penanganan lebih lanjut
+              </p>
+            </div>
+            <div class="p-4 space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Alasan Eskalasi *
+                </label>
+                <textarea
+                  v-model="escalationForm.reason"
+                  rows="3"
+                  placeholder="Jelaskan mengapa tiket ini perlu dieskalasi..."
+                  class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-red-500/20 resize-none"
+                ></textarea>
+              </div>
+              
+              <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Catatan:</strong> Setelah eskalasi, status tiket akan berubah menjadi "Pending" dan timer SLA akan di-pause sampai admin menugaskan petugas baru.
+                </p>
+              </div>
+            </div>
+            <div
+              class="p-4 border-t flex justify-end gap-2 bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700"
+            >
+              <button
+                @click="showEscalationModal = false"
+                class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                Batal
+              </button>
+              <button
+                @click="submitEscalation"
+                :disabled="!escalationForm.reason || loading.escalation"
+                class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {{ loading.escalation ? 'Memproses...' : 'Eskalasi Tiket' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </AdminLayout>
 </template>
 
@@ -637,6 +1018,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AdminLayout from '../../components/layout/AdminLayout.vue'
 import PageBreadcrumb from '../../components/common/PageBreadcrumb.vue'
 import api from '@/services/api'
+// Remove SLA calculator import - we'll use backend data instead
 
 // Interfaces
 interface User {
@@ -664,6 +1046,8 @@ interface Ticket {
   created_at: string
   response_deadline: string
   resolution_deadline: string
+  first_response_at?: string
+  completed_at?: string
   assigned_to_id: number
   user_id: number
   requester: User
@@ -684,14 +1068,24 @@ const logsContainer = ref<HTMLElement | null>(null)
 const newComment = ref('')
 const newStatus = ref('')
 const statusNotes = ref('')
+const newDeadline = ref('')
+const deadlineReason = ref('')
+const isExtensionOnly = ref(false)
+const escalationForm = reactive({
+  reason: '',
+})
 const showAssignModal = ref(false)
 const showFeedbackModal = ref(false)
+const showSLAModal = ref(false)
+const showEscalationModal = ref(false)
 const selectedTechnicianId = ref<number | null>(null)
 const feedbackForm = reactive({ rating: 0, review: '' })
 const loading = reactive({
   ticket: true,
   comment: false,
   status: false,
+  deadline: false,
+  escalation: false,
   technicians: false,
   assigning: false,
   feedback: false,
@@ -701,6 +1095,11 @@ const loading = reactive({
 const slaTimer = ref('Loading...')
 const slaProgress = ref(0)
 let timerInterval: any = null
+
+// RESPONSE TIMER STATE
+const responseTimer = ref('Loading...')
+const responseProgress = ref(0)
+let responseTimerInterval: any = null
 
 // Auth
 const authUser = ref<any>(null)
@@ -715,6 +1114,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
+  if (responseTimerInterval) clearInterval(responseTimerInterval)
 })
 
 // Roles
@@ -724,7 +1124,7 @@ const isUser = computed(() => authUser.value?.role === 'user')
 const isTicketOwner = computed(() => ticket.value?.assigned_to_id === authUser.value?.id)
 
 const isTicketClosed = computed(() =>
-  ['selesai', 'closed'].includes(ticket.value?.status?.toLowerCase() || ''),
+  ['completed', 'closed', 'selesai'].includes(ticket.value?.status?.toLowerCase() || ''),
 )
 const isMe = (uid?: number) => uid === authUser.value?.id
 
@@ -733,12 +1133,12 @@ const canComment = computed(
     !isTicketClosed.value &&
     (isAdmin.value || isTicketOwner.value || ticket.value?.user_id === authUser.value?.id),
 )
-const canCompleteTicket = computed(() => isAdmin.value || isTicketOwner.value)
+const canCompleteTicket = computed(() => isAdmin.value || (isPetugas.value && isTicketOwner.value))
 const canEscalate = computed(
   () => isPetugas.value && isTicketOwner.value && ticket.value?.status === 'on_progress',
 )
 const canRate = computed(
-  () => isUser.value && ticket.value?.status === 'selesai' && !ticket.value?.feedback,
+  () => isUser.value && ['completed', 'selesai'].includes(ticket.value?.status || '') && !ticket.value?.feedback,
 )
 
 // SLA Status Logic
@@ -755,6 +1155,200 @@ const slaStatus = computed(() => {
   return { bgColor: 'bg-green-100', textColor: 'text-green-600', barColor: 'bg-green-500' } // Safe
 })
 
+// Response Status Logic (for Admin)
+const responseStatus = computed(() => {
+  if (!ticket.value?.response_deadline) {
+    return { 
+      bgColor: 'bg-gray-100', 
+      textColor: 'text-gray-500', 
+      barColor: 'bg-gray-500',
+      borderClass: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'
+    }
+  }
+  
+  const deadline = new Date(ticket.value.response_deadline).getTime()
+  const now = new Date().getTime()
+  const diff = deadline - now
+
+  if (diff < 0) {
+    return { 
+      bgColor: 'bg-red-100', 
+      textColor: 'text-red-600', 
+      barColor: 'bg-red-600',
+      borderClass: 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+    }
+  }
+  if (diff < 3600 * 2000) { // < 2 Jam (Warning)
+    return { 
+      bgColor: 'bg-yellow-100', 
+      textColor: 'text-yellow-600', 
+      barColor: 'bg-yellow-500',
+      borderClass: 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
+    }
+  }
+  return { 
+    bgColor: 'bg-blue-100', 
+    textColor: 'text-blue-600', 
+    barColor: 'bg-blue-500',
+    borderClass: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
+  }
+})
+
+// SLA Data from Backend
+const slaData = ref<any>(null)
+
+// Fetch SLA data for completed tickets
+const fetchSLAData = async () => {
+  if (!ticket.value?.id || !isTicketClosed.value) return
+
+  try {
+    console.log('Fetching SLA data for ticket:', ticket.value.id)
+    const response = await api.get(`/slas/ticket/${ticket.value.id}`)
+    console.log('SLA API Response:', response.data)
+    
+    if (response.data.success) {
+      slaData.value = response.data.data
+      console.log('Fetched SLA Data:', slaData.value)
+    } else {
+      console.error('SLA API returned error:', response.data.message)
+    }
+  } catch (err: any) {
+    console.error('Error fetching SLA data:', err)
+    console.error('Error details:', err.response?.data)
+  }
+}
+
+// SLA Result for Completed Tickets (using backend data)
+const completedSLAResult = computed(() => {
+  console.log('Computing SLA result, slaData:', slaData.value)
+  console.log('Ticket completed_at:', ticket.value?.completed_at)
+  console.log('Ticket resolution_deadline:', ticket.value?.resolution_deadline)
+  
+  // If no SLA data from backend, calculate locally as fallback
+  if (!slaData.value || !slaData.value.resolution_sla) {
+    // Fallback calculation using ticket data directly
+    if (!ticket.value?.completed_at || !ticket.value?.resolution_deadline) {
+      return {
+        slaPercentage: null,
+        statusLabel: 'Not Completed',
+        delayHours: 0,
+        textClass: 'text-gray-500',
+        iconClass: 'text-gray-500',
+        iconBgClass: 'bg-gray-100',
+        borderClass: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800',
+      }
+    }
+
+    // Calculate SLA locally using same logic as backend
+    const completed = new Date(ticket.value.completed_at)
+    const deadline = new Date(ticket.value.resolution_deadline)
+    const diffMs = completed - deadline
+    const diffHours = diffMs / (1000 * 60 * 60)
+    
+    let slaPercentage = 100
+    if (diffHours > 0) {
+      if (diffHours <= 2) slaPercentage = 90
+      else if (diffHours <= 4) slaPercentage = 80
+      else if (diffHours <= 8) slaPercentage = 70
+      else if (diffHours <= 12) slaPercentage = 60
+      else if (diffHours <= 24) slaPercentage = 50
+      else slaPercentage = 0
+    }
+
+    const delayHours = Math.max(0, Math.round(diffHours * 10) / 10)
+    let statusLabel = 'On Time'
+    if (slaPercentage < 100) {
+      if (slaPercentage >= 90) statusLabel = 'Slightly Late'
+      else if (slaPercentage >= 70) statusLabel = 'Late'
+      else statusLabel = 'Very Late'
+    }
+
+    console.log('Fallback calculation - SLA:', slaPercentage, 'Status:', statusLabel, 'Delay:', delayHours)
+
+    let textClass = 'text-gray-500'
+    let iconClass = 'text-gray-500'
+    let iconBgClass = 'bg-gray-100'
+    let borderClass = 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'
+
+    if (slaPercentage === 100) {
+      textClass = 'text-green-600 dark:text-green-400'
+      iconClass = 'text-green-600'
+      iconBgClass = 'bg-green-100 dark:bg-green-900/30'
+      borderClass = 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+    } else if (slaPercentage >= 90) {
+      textClass = 'text-yellow-600 dark:text-yellow-400'
+      iconClass = 'text-yellow-600'
+      iconBgClass = 'bg-yellow-100 dark:bg-yellow-900/30'
+      borderClass = 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
+    } else if (slaPercentage >= 70) {
+      textClass = 'text-orange-600 dark:text-orange-400'
+      iconClass = 'text-orange-600'
+      iconBgClass = 'bg-orange-100 dark:bg-orange-900/30'
+      borderClass = 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20'
+    } else {
+      textClass = 'text-red-600 dark:text-red-400'
+      iconClass = 'text-red-600'
+      iconBgClass = 'bg-red-100 dark:bg-red-900/30'
+      borderClass = 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+    }
+
+    return {
+      slaPercentage,
+      statusLabel,
+      delayHours,
+      textClass,
+      iconClass,
+      iconBgClass,
+      borderClass,
+    }
+  }
+
+  // Use backend data
+  const sla = slaData.value.resolution_sla
+  const slaPercentage = sla.percentage
+  const statusLabel = sla.status
+  const delayHours = sla.delay_hours
+
+  let textClass = 'text-gray-500'
+  let iconClass = 'text-gray-500'
+  let iconBgClass = 'bg-gray-100'
+  let borderClass = 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'
+  console.log('Backend SLA Data: ', sla)
+  console.log('Backend SLA Percentage: ', slaPercentage)
+
+  if (slaPercentage === 100) {
+    textClass = 'text-green-600 dark:text-green-400'
+    iconClass = 'text-green-600'
+    iconBgClass = 'bg-green-100 dark:bg-green-900/30'
+    borderClass = 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+  } else if (slaPercentage && slaPercentage >= 90) {
+    textClass = 'text-yellow-600 dark:text-yellow-400'
+    iconClass = 'text-yellow-600'
+    iconBgClass = 'bg-yellow-100 dark:bg-yellow-900/30'
+    borderClass = 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
+  } else if (slaPercentage && slaPercentage >= 70) {
+    textClass = 'text-orange-600 dark:text-orange-400'
+    iconClass = 'text-orange-600'
+    iconBgClass = 'bg-orange-100 dark:bg-orange-900/30'
+    borderClass = 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20'
+  } else {
+    textClass = 'text-red-600 dark:text-red-400'
+    iconClass = 'text-red-600'
+    iconBgClass = 'bg-red-100 dark:bg-red-900/30'
+    borderClass = 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+  }
+
+  return {
+    slaPercentage,
+    statusLabel,
+    delayHours,
+    textClass,
+    iconClass,
+    iconBgClass,
+    borderClass,
+  }
+})
+
 // --- ACTIONS ---
 const goBack = () => {
   if (isUser.value) router.push('/user/dashboard')
@@ -769,11 +1363,20 @@ const fetchTicketDetail = async () => {
     const res = await api.get(`/tickets/${route.params.id}`)
     if (res.data.success) {
       ticket.value = res.data.data
+      console.log('Fetched ticket:', ticket.value)
       scrollToBottom()
       startSLACountdown()
+      startResponseCountdown()
+
+      // Fetch SLA data if ticket is completed
+      if (['selesai', 'closed'].includes(ticket.value.status?.toLowerCase() || '')) {
+        console.log('Ticket is completed, fetching SLA data...')
+        await fetchSLAData()
+      }
     }
   } catch (err: any) {
-    error.value = 'Gagal memuat tiket.'
+    console.error('Error fetching ticket detail:', err)
+    error.value = err.response?.data?.message || 'Gagal memuat tiket.'
   } finally {
     loading.ticket = false
   }
@@ -781,16 +1384,28 @@ const fetchTicketDetail = async () => {
 
 // Countdown Timer Logic
 const startSLACountdown = () => {
-  if (timerInterval) clearInterval(timerInterval)
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+
   const updateTimer = () => {
     if (!ticket.value?.resolution_deadline || isTicketClosed.value) {
       slaTimer.value = isTicketClosed.value ? 'Selesai' : '-'
       slaProgress.value = 100
       return
     }
+
+    // Check if timer should be paused (pending status)
+    if (ticket.value.status === 'pending') {
+      slaTimer.value = 'Timer di-pause'
+      // Keep current progress, don't update
+      return
+    }
+
     const now = new Date().getTime()
     const deadline = new Date(ticket.value.resolution_deadline).getTime()
-    // Start time asumsi dari created_at atau assign date (first_response_at) untuk progress bar
+    // Start time: use first_response_at if available, otherwise created_at
     const startTime = new Date(ticket.value.first_response_at || ticket.value.created_at).getTime()
     const totalDuration = deadline - startTime
     const timeLeft = deadline - now
@@ -802,77 +1417,203 @@ const startSLACountdown = () => {
       const hours = Math.floor(timeLeft / (1000 * 60 * 60))
       const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
       slaTimer.value = `${hours}j ${minutes}m`
-      // Hitung persentase sisa waktu
+      // Calculate progress percentage
       const elapsed = now - startTime
       const percent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
       slaProgress.value = percent
     }
   }
   updateTimer()
-  timerInterval = setInterval(updateTimer, 60000) // Update tiap menit
+  timerInterval = setInterval(updateTimer, 60000) // Update every minute
+}
+
+// Response Countdown Timer Logic (for Admin)
+const startResponseCountdown = () => {
+  if (responseTimerInterval) {
+    clearInterval(responseTimerInterval)
+    responseTimerInterval = null
+  }
+
+  const updateResponseTimer = () => {
+    // Only show for admin, unassigned tickets, and no first response yet
+    if (!isAdmin.value || ticket.value?.assigned_to_id || ticket.value?.first_response_at || !ticket.value?.response_deadline) {
+      responseTimer.value = '-'
+      responseProgress.value = 0
+      return
+    }
+
+    const now = new Date().getTime()
+    const deadline = new Date(ticket.value.response_deadline).getTime()
+    const startTime = new Date(ticket.value.created_at).getTime()
+    const totalDuration = deadline - startTime
+    const timeLeft = deadline - now
+
+    if (timeLeft <= 0) {
+      responseTimer.value = 'Terlambat!'
+      responseProgress.value = 100
+    } else {
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60))
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+      responseTimer.value = `${hours}j ${minutes}m`
+      
+      // Calculate progress percentage
+      const elapsed = now - startTime
+      const percent = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
+      responseProgress.value = percent
+    }
+  }
+  
+  updateResponseTimer()
+  responseTimerInterval = setInterval(updateResponseTimer, 60000) // Update every minute
 }
 
 const submitComment = async () => {
-  if (!newComment.value.trim()) return
+  if (!ticket.value || !newComment.value.trim()) return
   loading.comment = true
   try {
-    await api.post(`/tickets/${ticket.value!.id}/logs`, { notes: newComment.value })
+    await api.post(`/tickets/${ticket.value.id}/logs`, { notes: newComment.value })
     await fetchTicketDetail()
     newComment.value = ''
-  } catch {
-    alert('Gagal kirim pesan')
+  } catch (err: any) {
+    console.error('Error submitting comment:', err)
+    alert(err.response?.data?.message || 'Gagal kirim pesan')
   } finally {
     loading.comment = false
   }
 }
 
 const submitStatusUpdate = async () => {
-  if (!newStatus.value) return
+  if (!ticket.value || !newStatus.value) return
   loading.status = true
   try {
-    await api.put(`/tickets/${ticket.value!.id}/status`, { status: newStatus.value })
+    const oldStatus = ticket.value.status
+    console.log('Updating status from', oldStatus, 'to', newStatus.value)
+    
+    await api.put(`/tickets/${ticket.value.id}/status`, { status: newStatus.value })
     await fetchTicketDetail()
+
+    // Show SLA modal if petugas completed the ticket
+    if (isPetugas.value && ['completed', 'selesai'].includes(newStatus.value) && !['completed', 'selesai'].includes(oldStatus)) {
+      console.log('Petugas completed ticket, fetching SLA data...')
+      // Wait a bit for the backend to process the completion
+      setTimeout(async () => {
+        await fetchSLAData()
+        console.log('SLA data after completion:', slaData.value)
+        showSLAModal.value = true
+      }, 1000)
+    }
+
     newStatus.value = ''
     alert('Status diperbarui!')
-  } catch {
-    alert('Gagal update status')
+  } catch (err: any) {
+    console.error('Error updating status:', err)
+    alert(err.response?.data?.message || 'Gagal update status')
   } finally {
     loading.status = false
   }
 }
 
+const submitDeadlineUpdate = async () => {
+  if (!ticket.value || !newDeadline.value || !deadlineReason.value) return
+  loading.deadline = true
+  try {
+    console.log('Updating deadline to:', newDeadline.value, 'Extension only:', isExtensionOnly.value)
+    
+    await api.put(`/tickets/${ticket.value.id}/deadline`, {
+      resolution_deadline: newDeadline.value,
+      reason: deadlineReason.value,
+      extend_only: isExtensionOnly.value
+    })
+    
+    await fetchTicketDetail()
+    newDeadline.value = ''
+    deadlineReason.value = ''
+    isExtensionOnly.value = false
+    alert('Deadline berhasil diperbarui!')
+  } catch (err: any) {
+    console.error('Error updating deadline:', err)
+    alert(err.response?.data?.message || 'Gagal update deadline')
+  } finally {
+    loading.deadline = false
+  }
+}
+
+const submitEscalation = async () => {
+  if (!ticket.value || !escalationForm.reason) return
+  loading.escalation = true
+  try {
+    console.log('Escalating ticket, status will change to pending')
+    
+    await api.put(`/tickets/${ticket.value.id}/escalate`, {
+      eskalasi_reason: escalationForm.reason
+    })
+    
+    showEscalationModal.value = false
+    escalationForm.reason = ''
+    await fetchTicketDetail()
+    alert('Tiket berhasil dieskalasi! Status berubah menjadi Pending dan timer SLA di-pause.')
+  } catch (err: any) {
+    console.error('Error escalating ticket:', err)
+    alert(err.response?.data?.message || 'Gagal eskalasi tiket')
+  } finally {
+    loading.escalation = false
+  }
+}
+
 const quickComplete = async () => {
   if (confirm('Tandai tiket ini sebagai Selesai?')) {
-    newStatus.value = 'selesai'
-    await submitStatusUpdate()
+    if (!ticket.value) return
+    loading.status = true
+    try {
+      const oldStatus = ticket.value.status
+      console.log('Quick completing ticket, old status:', oldStatus)
+      
+      await api.put(`/tickets/${ticket.value.id}/status`, { status: 'completed' })
+      await fetchTicketDetail()
+
+      // Show SLA modal if petugas completed the ticket
+      if (isPetugas.value && !['completed', 'selesai'].includes(oldStatus)) {
+        console.log('Petugas quick completed ticket, fetching SLA data...')
+        // Wait a bit for the backend to process the completion
+        setTimeout(async () => {
+          await fetchSLAData()
+          console.log('SLA data after quick completion:', slaData.value)
+          showSLAModal.value = true
+        }, 1000)
+      }
+
+      alert('Tiket berhasil diselesaikan!')
+    } catch (err: any) {
+      console.error('Error completing ticket:', err)
+      alert(err.response?.data?.message || 'Gagal menyelesaikan tiket')
+    } finally {
+      loading.status = false
+    }
   }
 }
 
 const handleEscalate = async () => {
-  const reason = prompt('Alasan eskalasi:')
-  if (!reason) return
-  try {
-    await api.put(`/tickets/${ticket.value!.id}/escalate`, { eskalasi_reason: reason })
-    alert('Tiket berhasil dieskalasi.')
-    fetchTicketDetail()
-  } catch (e) {
-    alert('Gagal eskalasi.')
-  }
+  if (!ticket.value) return
+  
+  // Show escalation modal instead of simple prompt
+  showEscalationModal.value = true
 }
 
 const submitFeedback = async () => {
+  if (!ticket.value) return
   loading.feedback = true
   try {
     await api.post('/feedbacks', {
-      ticket_id: ticket.value!.id,
+      ticket_id: ticket.value.id,
       rating: feedbackForm.rating,
       review: feedbackForm.review,
     })
     showFeedbackModal.value = false
     await fetchTicketDetail()
     alert('Ulasan terkirim!')
-  } catch (e) {
-    alert('Gagal kirim ulasan')
+  } catch (err: any) {
+    console.error('Error submitting feedback:', err)
+    alert(err.response?.data?.message || 'Gagal kirim ulasan')
   } finally {
     loading.feedback = false
   }
@@ -883,6 +1624,8 @@ const fetchTechnicians = async () => {
   try {
     const res = await api.get('/users', { params: { role: 'petugas' } })
     technicians.value = res.data.data
+  } catch (err: any) {
+    console.error('Error fetching technicians:', err)
   } finally {
     loading.technicians = false
   }
@@ -898,15 +1641,16 @@ const closeAssignModal = () => {
   selectedTechnicianId.value = null
 }
 const submitAssignment = async () => {
-  if (!ticket.value) return
+  if (!ticket.value || !selectedTechnicianId.value) return
   loading.assigning = true
   try {
     await api.put(`/tickets/${ticket.value.id}/assign`, { petugas_id: selectedTechnicianId.value })
     await fetchTicketDetail()
     closeAssignModal()
     alert('Berhasil assign!')
-  } catch {
-    alert('Gagal')
+  } catch (err: any) {
+    console.error('Error assigning ticket:', err)
+    alert(err.response?.data?.message || 'Gagal assign tiket')
   } finally {
     loading.assigning = false
   }
@@ -937,11 +1681,15 @@ const formatActionText = (log: any) => {
 }
 const statusBadgeClass = (s: string) => {
   const map: any = {
-    selesai: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    // New standardized statuses
+    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+    closed: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+    // Legacy statuses (for backward compatibility)
+    selesai: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     on_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
     eskalasi: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    closed: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
   }
   return `px-3 py-1 rounded-full text-xs font-bold uppercase ${map[s?.toLowerCase()] || 'bg-gray-100'}`
 }
@@ -956,6 +1704,7 @@ const priorityBadgeClass = (p: string) => {
 const getAttachmentUrl = (path: string) => {
   if (!path) return '#'
   if (path.startsWith('http') || path.startsWith('https')) return path
+  // Use the same base URL as api.ts
   const BASE_API_URL = 'http://localhost:3000'
   return `${BASE_API_URL}${path}`
 }

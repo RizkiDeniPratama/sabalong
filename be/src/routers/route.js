@@ -9,6 +9,7 @@ import ticketRoutes from "./ticketRoutes.js";
 import feedbackRoutes from "./feedbackRoutes.js";
 import notifRoutes from "./notifRoutes.js";
 import dashboardAnalyticRoutes from "./dashboardAnalyticRoutes.js";
+import publicRoutes from "./publicRoutes.js";
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use("/tickets", ticketRoutes);
 router.use("/feedbacks", feedbackRoutes);
 router.use("/notifications", notifRoutes);
 router.use("/dashboard-analytics", dashboardAnalyticRoutes);
+router.use("/public", publicRoutes);
 
 export default router;

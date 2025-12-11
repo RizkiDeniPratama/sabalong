@@ -181,7 +181,7 @@
                   </div>
                   <div class="p-2">
                     <router-link
-                      to="/petugas/profile"
+                      to="/profile"
                       class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,7 +265,7 @@ const menuItems = [
   },
   {
     label: 'Notifikasi',
-    path: '/petugas/notifications',
+    path: '/notifications',
     icon: 'IconBell',
   },
 ]
@@ -342,12 +342,12 @@ const handleLogout = async () => {
   try {
     await api.post('/auth/logout')
     localStorage.removeItem('access_token')
-    router.push('/login')
+    router.push('/signin')
   } catch (err) {
     console.error('Logout error:', err)
     // Force logout even if API fails
     localStorage.removeItem('access_token')
-    router.push('/login')
+    router.push('/signin')
   }
 }
 

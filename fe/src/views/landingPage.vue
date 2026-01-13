@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import api from '@/services/api'
 import { useRouter } from 'vue-router'
 import navbarPage from '@/components/layout/navbarPage.vue'
+import { useAuthCheck } from '@/composables/useAuthCheck'
 
 // IMPORT AOS
 import AOS from 'aos'
@@ -313,8 +314,15 @@ const getServiceIcon = (kategori: string) => {
   return icons[kategori] || '🛠️'
 }
 
+// ============= AUTH CHECK =============
+const { checkTokenValidity, refreshAuthState } = useAuthCheck()
+
 // ============= LIFECYCLE =============
 onMounted(() => {
+  // Cek validitas token saat landing page dimuat
+  refreshAuthState()
+  checkTokenValidity()
+  
   fetchData()
   window.addEventListener('scroll', handleScroll)
   startAutoScroll()

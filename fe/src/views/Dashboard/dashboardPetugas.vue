@@ -341,25 +341,9 @@ import { useRouter } from 'vue-router'
 import AdminLayout from '../../components/layout/AdminLayout.vue'
 import PageBreadcrumb from '../../components/common/PageBreadcrumb.vue'
 import api from '../../services/api'
+import type { Ticket, Feedback } from '../../types'
 
-interface Ticket {
-  id: number
-  ticket_number: string
-  judul_permohonan: string
-  status: string
-  priority: string
-  created_at: string
-  service?: { nama_layanan: string }
-}
-
-interface Feedback {
-  id: number
-  rating: number
-  review: string
-  created_at: string
-  ticket?: { ticket_number: string }
-}
-
+// Hapus interface lokal karena sudah ada di types/index.ts
 const router = useRouter()
 const currentPageTitle = ref('Dashboard Petugas')
 
@@ -378,7 +362,7 @@ const stats = reactive({
   total: 0,
   on_progress: 0,
   completed: 0,
-  average_rating: 0,
+  average_rating: '0.0', // String untuk konsistensi dengan toFixed()
 })
 
 const currentTicket = computed(() => {

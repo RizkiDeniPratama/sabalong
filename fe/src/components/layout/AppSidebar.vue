@@ -200,9 +200,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAuthStore } from '../../store/auth' // <-- 1. IMPORT "OTAK" KITA
+import { useAuthStore } from '../../store/auth'
 
-// Import semua ikon yang kita butuhkan
 import {
   GridIcon,
   UserCircleIcon,
@@ -213,20 +212,16 @@ import {
   BarChartIcon,
   ChevronDownIcon,
   HorizontalDots,
-} from '../../icons' // <-- Cek path ini, mungkin perlu disesuaikan
-import SidebarWidget from './SidebarWidget.vue'
-import { useSidebar } from '@/composables/useSidebar' // (Hook dari template Anda)
+} from '../../icons'
+import { useSidebar } from '@/composables/useSidebar'
 
 const route = useRoute()
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar()
-const authStore = useAuthStore() // <-- 2. INISIALISASI "OTAK"
+const authStore = useAuthStore()
 
-// Ambil user role secara reaktif
 const userRole = computed(() => authStore.userRole)
 
-// --- 3. DEFINISIKAN MENU UNTUK SETIAP ROLE ---
-
-// (Ini adalah menu yang kita diskusikan sebelumnya)
+// --- DEFINISIKAN MENU UNTUK SETIAP ROLE ---
 const userMenu = [
   {
     title: 'MENU',
@@ -268,9 +263,9 @@ const adminMenu = [
         icon: GridIcon,
         name: 'Pengaturan Master',
         subItems: [
-          { name: 'Kelola SLA', path: '/manage-sla' },
-          { name: 'Kelola Skills', path: '/manage-skills' },
-          { name: 'Kelola Roles', path: '/manage-roles' },
+          { name: 'Kelola SLA', path: '/admin/manage-sla' },
+          { name: 'Kelola Skills', path: '/admin/manage-skills' },
+          { name: 'Kelola Roles', path: '/admin/manage-roles' },
         ],
       },
     ],
@@ -294,10 +289,6 @@ const pimpinanMenu = [
   },
 ]
 
-// --- 4. HAPUS 'menuGroups' YANG LAMA ---
-// const menuGroups = [ ... (HAPUS SEMUA BLOK BESAR INI) ... ]
-
-// --- 5. BUAT COMPUTED PROPERTY "PINTAR" ---
 const roleBasedMenuGroups = computed(() => {
   switch (userRole.value) {
     case 'admin':

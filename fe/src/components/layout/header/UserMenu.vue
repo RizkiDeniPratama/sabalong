@@ -87,7 +87,7 @@ const signOut = () => {
   console.log('Signing out...')
   authStore.logout()
   closeDropdown()
-  router.push({ name: 'Signin' })
+  // router.push({ name: 'Signin' })
 }
 
 const handleClickOutside = (event) => {

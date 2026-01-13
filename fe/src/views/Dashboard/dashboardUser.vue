@@ -38,88 +38,114 @@
         ></div>
       </div> -->
 
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white">Katalog Layanan</h3>
-          <span class="text-sm text-gray-500">{{ filteredServices.length }} layanan tersedia</span>
-        </div>
-
-        <div v-if="loading.services" class="py-20 text-center">
-          <div
-            class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600"
-          ></div>
-        </div>
-
+      <!-- Quick Actions Section -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Buat Tiket Baru -->
         <div
-          v-else-if="filteredServices.length === 0"
-          class="p-10 text-center bg-white rounded-2xl border border-dashed border-gray-300 dark:bg-gray-900 dark:border-gray-700"
+          @click="$router.push('/user/tickets/create')"
+          class="group cursor-pointer rounded-2xl border border-gray-200 bg-gradient-to-br from-brand-50 to-blue-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:border-brand-300 dark:from-brand-900/20 dark:to-blue-900/20 dark:border-gray-800 dark:hover:border-brand-700"
         >
-          <p class="text-gray-500">Layanan yang Anda cari tidak ditemukan.</p>
+          <div class="flex items-center gap-4">
+            <div class="h-12 w-12 flex items-center justify-center rounded-xl bg-brand-600 text-white group-hover:scale-110 transition-transform">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-900 dark:text-white">Buat Tiket Baru</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Laporkan masalah atau minta bantuan</p>
+            </div>
+          </div>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div
-            v-for="service in filteredServices"
-            :key="service.id"
-            @click="goToCreateTicket(service.id)"
-            class="group cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md hover:border-brand-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-brand-700"
-          >
-            <div class="flex justify-between items-start mb-4">
-              <div
-                class="h-12 w-12 flex items-center justify-center rounded-xl bg-brand-50 text-brand-600 group-hover:bg-brand-600 group-hover:text-white transition-colors dark:bg-brand-900/20 dark:text-brand-400"
-              >
-                <img v-if="service.icon" :src="service.icon" class="h-6 w-6" />
-                <svg v-else class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                  />
-                </svg>
-              </div>
-              <span
-                class="px-2.5 py-1 rounded-lg bg-gray-100 text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                >{{ service.kategori }}</span
-              >
+        <!-- Lihat Semua Tiket -->
+        <div
+          @click="$router.push('/user/tickets')"
+          class="group cursor-pointer rounded-2xl border border-gray-200 bg-gradient-to-br from-green-50 to-emerald-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:border-green-300 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-gray-800 dark:hover:border-green-700"
+        >
+          <div class="flex items-center gap-4">
+            <div class="h-12 w-12 flex items-center justify-center rounded-xl bg-green-600 text-white group-hover:scale-110 transition-transform">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
             </div>
+            <div>
+              <h4 class="font-bold text-gray-900 dark:text-white">Kelola Tiket</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Lihat dan kelola semua tiket Anda</p>
+            </div>
+          </div>
+        </div>
 
-            <h4
-              class="text-lg font-bold text-gray-900 mb-2 group-hover:text-brand-600 dark:text-white transition-colors"
-            >
-              {{ service.nama_layanan }}
-            </h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4 h-10">
-              {{ service.deskripsi }}
-            </p>
+        <!-- Browse Layanan -->
+        <div
+          @click="$router.push('/user/services')"
+          class="group cursor-pointer rounded-2xl border border-gray-200 bg-gradient-to-br from-purple-50 to-indigo-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg hover:border-purple-300 dark:from-purple-900/20 dark:to-indigo-900/20 dark:border-gray-800 dark:hover:border-purple-700"
+        >
+          <div class="flex items-center gap-4">
+            <div class="h-12 w-12 flex items-center justify-center rounded-xl bg-purple-600 text-white group-hover:scale-110 transition-transform">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-900 dark:text-white">Katalog Layanan</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Jelajahi semua layanan tersedia</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <!-- Recent Activity Section -->
+      <div class="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-800">
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">Aktivitas Terbaru</h3>
+          <p class="text-sm text-gray-500 mt-1">Timeline aktivitas tiket Anda</p>
+        </div>
+        
+        <div v-if="loading.activities" class="py-12 text-center">
+          <div class="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-600"></div>
+        </div>
+        
+        <div v-else-if="recentActivities.length === 0" class="p-8 text-center">
+          <div class="mx-auto h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+            <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-gray-500">Belum ada aktivitas terbaru</p>
+        </div>
+        
+        <div v-else class="p-6">
+          <div class="space-y-4">
             <div
-              class="pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between"
+              v-for="activity in recentActivities"
+              :key="activity.id"
+              class="flex gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              @click="$router.push(`/detail-ticket/${activity.ticket_id}`)"
             >
-              <span class="text-xs text-gray-400 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                {{ service.sla?.resolution_hours || 24 }} Jam
-              </span>
-              <!-- <span
-                class="text-xs font-bold text-brand-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform"
-              >
-                Buat Tiket
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
-              </span> -->
+              <div class="flex-shrink-0">
+                <div :class="getActivityIconClass(activity.type)" class="h-10 w-10 rounded-full flex items-center justify-center">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path v-if="activity.type === 'status_change'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path v-else-if="activity.type === 'comment'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">
+                    {{ activity.ticket_number }}
+                  </p>
+                  <span class="text-xs text-gray-500">{{ formatDate(activity.created_at) }}</span>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ activity.description }}</p>
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-xs text-gray-500">{{ activity.service_name }}</span>
+                  <span class="text-xs text-gray-300">•</span>
+                  <span :class="statusBadgeClass(activity.current_status)">{{ activity.current_status }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -239,10 +265,9 @@ import api from '@/services/api'
 // State
 const router = useRouter()
 const user = ref<any>({})
-const services = ref<any[]>([])
 const recentTickets = ref<any[]>([])
-const serviceSearch = ref('')
-const loading = reactive({ services: true, user: true })
+const recentActivities = ref<any[]>([])
+const loading = reactive({ user: true, activities: true })
 const stats = reactive({ active: 0, completed: 0 })
 
 // API
@@ -253,13 +278,7 @@ const initData = async () => {
     if (profileRes.data.success) user.value = profileRes.data.data
     loading.user = false
 
-    // 2. Services (Katalog)
-    const serviceRes = await api.get('/services')
-    if (serviceRes.data.success)
-      services.value = serviceRes.data.data.filter((s: any) => s.is_active) // Hanya yg aktif
-    loading.services = false
-
-    // 3. Tickets (Untuk Stats & Recent)
+    // 2. Tickets (Untuk Stats & Recent)
     const ticketRes = await api.get('/tickets')
     if (ticketRes.data.success) {
       const all = ticketRes.data.data
@@ -271,22 +290,68 @@ const initData = async () => {
       ).length
       recentTickets.value = all.slice(0, 3)
     }
+
+    // 3. Recent Activities (Timeline aktivitas)
+    await loadRecentActivities()
   } catch (e) {
     console.error(e)
   }
 }
 
-// Logic
-const filteredServices = computed(() => {
-  if (!serviceSearch.value) return services.value
-  const q = serviceSearch.value.toLowerCase()
-  return services.value.filter(
-    (s) => s.nama_layanan.toLowerCase().includes(q) || s.kategori.toLowerCase().includes(q),
-  )
-})
+const loadRecentActivities = async () => {
+  try {
+    // Simulasi data aktivitas - nanti bisa diganti dengan API endpoint khusus
+    const ticketRes = await api.get('/tickets')
+    if (ticketRes.data.success) {
+      const activities: any[] = []
+      
+      // Generate activities dari tickets
+      ticketRes.data.data.slice(0, 5).forEach((ticket: any) => {
+        // Status change activity
+        activities.push({
+          id: `status_${ticket.id}`,
+          type: 'status_change',
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          description: `Status tiket diubah menjadi "${ticket.status}"`,
+          service_name: ticket.service?.nama_layanan || 'Unknown Service',
+          current_status: ticket.status,
+          created_at: ticket.updated_at || ticket.created_at
+        })
+        
+        // Ticket creation activity
+        activities.push({
+          id: `create_${ticket.id}`,
+          type: 'created',
+          ticket_id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          description: `Tiket baru dibuat untuk layanan ${ticket.service?.nama_layanan}`,
+          service_name: ticket.service?.nama_layanan || 'Unknown Service',
+          current_status: ticket.status,
+          created_at: ticket.created_at
+        })
+      })
+      
+      // Sort by date and take latest 8
+      recentActivities.value = activities
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 8)
+    }
+    loading.activities = false
+  } catch (e) {
+    console.error(e)
+    loading.activities = false
+  }
+}
 
-const goToCreateTicket = (serviceId: number) => {
-  router.push({ path: '/user/tickets/create', query: { service_id: serviceId } })
+// Logic
+const getActivityIconClass = (type: string) => {
+  const classes = {
+    status_change: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+    comment: 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400',
+    created: 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400'
+  }
+  return classes[type as keyof typeof classes] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
 }
 
 // Utils

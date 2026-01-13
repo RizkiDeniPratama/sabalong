@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import api from '@/services/api'
 
 // ============= PROPS =============
 interface Props {
@@ -71,10 +72,29 @@ const goToCreateTicket = () => {
   }
 }
 
-const handleLogout = () => {
-  authStore.logout()
-  showUserMenu.value = false
-  router.push({ name: 'LandingPage' })
+const handleLogout = async () => {
+  try {
+    // Coba hit API logout jika masih ada token valid
+    if (authStore.token) {
+      try {
+        await api.post('/auth/logout')
+        console.log('API logout successful')
+      } catch (error) {
+        console.warn('API logout failed, proceeding with local logout:', error)
+      }
+    }
+  } catch (error) {
+    console.warn('Logout API call failed:', error)
+  } finally {
+    // Selalu lakukan local logout
+    authStore.logout()
+    showUserMenu.value = false
+    
+    // Force redirect ke landing page
+    if (router.currentRoute.value.name !== 'LandingPage') {
+      router.push({ name: 'LandingPage' })
+    }
+  }
 }
 
 const handleScroll = () => {
@@ -277,6 +297,7 @@ onUnmounted(() => {
 
             <!-- Create Ticket Button -->
             <button
+              v-if="authStore.userRole === 'user'"
               @click="goToCreateTicket"
               class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all text-sm"
             >
@@ -343,6 +364,7 @@ onUnmounted(() => {
                     </button>
 
                     <button
+                      v-if="authStore.userRole === 'user'"
                       @click="goToCreateTicket"
                       class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { validateToken } from '../utils/tokenUtils'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -92,6 +93,25 @@ const routes: Array<RouteRecordRaw> = [
     meta: { title: 'SLA Ranking', requiresAuth: true, roles: ['admin', 'pimpinan'] },
   },
 
+  {
+    path: '/admin/manage-sla',
+    name: 'ManageSLA',
+    component: () => import('../views/Pages/manageSLA.vue'),
+    meta: { title: 'Manage SLA', requiresAuth: true, roles: ['admin'] },
+  },
+  {
+    path: '/admin/manage-skills',
+    name: 'ManageSkills',
+    component: () => import('../views/Pages/manageSkills.vue'),
+    meta: { title: 'Manage Skills', requiresAuth: true, roles: ['admin'] },
+  },
+  {
+    path: '/admin/manage-roles',
+    name: 'ManageRoles',
+    component: () => import('../views/Pages/manageRoles.vue'),
+    meta: { title: 'Manage Roles', requiresAuth: true, roles: ['admin'] },
+  },
+
   // --- 4. ROLE: PETUGAS ---
   {
     path: '/petugas/dashboard',
@@ -130,6 +150,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'UserTicketList',
     component: () => import('../views/Pages/myTicketList.vue'),
     meta: { title: 'Riwayat Tiket', requiresAuth: true, roles: ['user', 'admin'] },
+  },
+  {
+    path: '/user/services',
+    name: 'UserServices',
+    component: () => import('../views/Dashboard/servicesPage.vue'),
+    meta: { title: 'Katalog Layanan', requiresAuth: true, roles: ['user', 'admin'] },
   },
 
   // --- 6. SHARED / UNIVERSAL AUTHENTICATED ROUTES ---
@@ -185,14 +211,30 @@ router.beforeEach((to, from, next) => {
   document.title = `${to.meta.title} | SABALONG`
 
   const authStore = useAuthStore()
-  const isAuthenticated = authStore.isAuthenticated
+  
+  // Enhanced authentication check dengan token validation
+  let isAuthenticated = false
+  const token = localStorage.getItem('token')
+  
+  if (token && authStore.user) {
+    const validation = validateToken(token)
+    if (validation.valid) {
+      isAuthenticated = true
+    } else {
+      console.warn('Token validation failed in router:', validation.reason)
+      // Auto logout jika token tidak valid
+      authStore.logout()
+      isAuthenticated = false
+    }
+  }
+  
   const userRole = authStore.userRole
-
   const requiredRoles = to.meta.roles
 
   console.log('Navigating to:', to.name, to.path)
   console.log('Route meta:', to.meta)
   console.log('Is authenticated:', isAuthenticated)
+  console.log('Token validation:', token ? 'Token exists' : 'No token')
 
   // --- Guest Protection ---
   if (to.meta.requiresGuest && isAuthenticated) {
@@ -204,6 +246,8 @@ router.beforeEach((to, from, next) => {
 
   // --- Auth Protection ---
   if (to.meta.requiresAuth && !isAuthenticated) {
+    // Store intended URL untuk redirect setelah login
+    authStore.setIntendedUrl(to.fullPath)
     return next({ name: 'Signin', query: { redirect: to.fullPath } })
   }
 
@@ -213,7 +257,7 @@ router.beforeEach((to, from, next) => {
       return next()
     } else {
       // Role tidak cocok, lempar ke halaman not found/unauthorized
-      // Sebaiknya buat halaman 403 Forbidden, untuk sementara kita pakai 404
+      console.warn('Access denied: insufficient role', { userRole, requiredRoles })
       return next({ name: '404 Error' })
     }
   }

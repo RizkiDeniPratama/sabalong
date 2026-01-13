@@ -236,6 +236,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../../store/auth'
 // import NotificationBadge from '../NotificationBadge.vue'
 import api from '../../services/api'
 
@@ -247,7 +248,15 @@ const showUserMenu = ref(false)
 const isDarkMode = ref(false)
 const user = ref<any>(null)
 
-const menuItems = [
+// Type definition untuk menu items
+interface MenuItem {
+  label: string
+  path: string
+  icon: string
+  badge?: number | string // Optional badge
+}
+
+const menuItems: MenuItem[] = [
   {
     label: 'Dashboard',
     path: '/petugas/dashboard',
@@ -339,17 +348,21 @@ const toggleDarkMode = () => {
 
 const handleLogout = async () => {
   if (!confirm('Yakin ingin logout?')) return
+  
+  // Gunakan auth store yang sudah ada (lebih aman dan konsisten)
+  const authStore = useAuthStore()
+  
   try {
     await api.post('/auth/logout')
-    localStorage.removeItem('access_token')
-    router.push('/signin')
+    // Gunakan method logout dari store (otomatis hapus token dan user data)
+    authStore.logout()
   } catch (err) {
     console.error('Logout error:', err)
-    // Force logout even if API fails
-    localStorage.removeItem('access_token')
-    router.push('/signin')
+    // Force logout even if API fails - tetap gunakan store
+    authStore.logout()
   }
 }
+
 
 const fetchUserProfile = async () => {
   try {
